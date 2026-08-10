@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THE FARM — BOARDING PASS SCAN</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <style>
   :root{
-    --paper:#EDE7D6;
-    --card:#FBF8EF;
-    --ink:#152238;
-    --ink-soft:#6B6355;
-    --line:#D8CFB6;
+    --paper:#F2F4F6;
+    --card:#FFFFFF;
+    --ink:#191F28;
+    --ink-soft:#8B95A1;
+    --line:#E5E8EB;
+    --accent:#3182F6;
+    --accent-soft:#EEF4FF;
     --operator:#B23A2E;
     --explorer:#1F6F8B;
     --connector:#A6631D;
@@ -23,10 +24,8 @@
   html,body{margin:0;padding:0;}
   body{
     background:var(--paper);
-    background-image: radial-gradient(circle at 1px 1px, rgba(21,34,56,0.06) 1px, transparent 0);
-    background-size:20px 20px;
     color:var(--ink);
-    font-family:'Noto Sans KR', sans-serif;
+    font-family:'Pretendard', sans-serif;
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -35,32 +34,32 @@
   }
   .stage{ width:100%; max-width:460px; transition:max-width 0.15s ease; }
   .stage.wide{ max-width:980px; }
-  .display{ font-family:'Jua', sans-serif; letter-spacing:0.01em; }
-  .mono{ font-family:'IBM Plex Mono', monospace; }
+  .display{ font-family:'Pretendard', sans-serif; font-weight:800; letter-spacing:-0.02em; }
+  .mono{ font-family:'Pretendard', sans-serif; font-variant-numeric:tabular-nums; }
 
   /* ---------- ticket shell ---------- */
   .card{
     background:var(--card);
-    border:2px solid var(--ink);
-    border-radius:16px;
-    box-shadow:0 3px 0 var(--ink), 0 16px 32px rgba(21,34,56,0.16);
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:0 2px 8px rgba(25,31,40,0.04), 0 12px 28px rgba(25,31,40,0.08);
     position:relative;
     overflow:visible;
   }
   .card-topline{
     display:flex; align-items:center; justify-content:space-between;
-    padding:11px 20px;
-    background:var(--ink);
-    color:var(--paper);
-    border-radius:14px 14px 0 0;
+    padding:13px 20px;
+    background:var(--accent);
+    color:#fff;
+    border-radius:19px 19px 0 0;
   }
-  .card-topline .tag{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.14em; display:flex; align-items:center; gap:6px; }
+  .card-topline .tag{ font-family:'Pretendard',sans-serif; font-size:10px; letter-spacing:0.14em; display:flex; align-items:center; gap:6px; }
 
   .card-inner{ padding:26px 24px 8px; }
 
   /* route indicator (used in intro + quiz progress) */
   .route{ display:flex; align-items:center; gap:10px; margin:4px 0 4px; }
-  .route .stop{ font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.06em; flex-shrink:0; }
+  .route .stop{ font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.06em; flex-shrink:0; }
   .route .stop.dim{ color:var(--ink-soft); }
   .route-line{ position:relative; flex:1; height:16px; }
   .route-line .dots{
@@ -78,7 +77,7 @@
   }
   .perf::before, .perf::after{
     content:''; position:absolute; top:-11px; width:22px; height:22px; border-radius:50%;
-    background:var(--paper); border:2px solid var(--ink);
+    background:var(--paper); border:1px solid var(--line);
   }
   .perf::before{ left:-13px; }
   .perf::after{ right:-13px; }
@@ -87,19 +86,20 @@
   .entry-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .entry-tab{
     flex:1; padding:11px; border-radius:9px; border:1.5px solid var(--line);
-    background:#fff; font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:700;
+    background:#fff; font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
     letter-spacing:0.04em; color:var(--ink-soft); cursor:pointer; transition:all 0.14s ease;
   }
-  .entry-tab:hover{ border-color:var(--ink); color:var(--ink); }
-  .entry-tab.active{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  .entry-tab:hover{ border-color:var(--accent); color:var(--accent); }
+  .entry-tab.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
 
-  .field-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); letter-spacing:0.08em; margin:4px 0 7px; }
+  .field-label{ font-family:'Pretendard',sans-serif; font-size:11px; color:var(--ink-soft); letter-spacing:0.08em; margin:4px 0 7px; }
   .field-input{
     width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:10px;
-    font-size:15.5px; font-family:'Noto Sans KR',sans-serif; color:var(--ink); background:#fff; margin-bottom:4px;
+    font-size:15.5px; font-family:'Pretendard',sans-serif; color:var(--ink); background:#fff; margin-bottom:4px;
+    transition:border-color 0.14s ease, box-shadow 0.14s ease;
   }
-  .field-input:focus{ outline:none; border-color:var(--ink); }
-  .field-error{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--operator); margin:6px 0 0; }
+  .field-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .field-error{ font-family:'Pretendard',sans-serif; font-size:11.5px; color:var(--operator); margin:6px 0 0; }
 
   /* ---------- intro ---------- */
   .lede{ font-size:14.5px; color:var(--ink-soft); line-height:1.7; margin:12px 0 22px; }
@@ -107,94 +107,94 @@
   .type-preview{ display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin:22px 0 6px; }
   .type-chip{ border:1.5px solid var(--line); border-radius:10px; padding:10px 3px 8px; text-align:center; background:#fff; }
   .type-chip .sym{ font-size:17px; display:block; margin-bottom:4px; }
-  .type-chip .code{ font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--ink-soft); }
+  .type-chip .code{ font-family:'Pretendard',sans-serif; font-size:9px; color:var(--ink-soft); }
 
   .stub{ padding:16px 24px 24px; }
   button.primary{
-    width:100%; background:var(--ink); color:var(--paper); border:none; border-radius:11px;
-    padding:16px; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px;
-    letter-spacing:0.06em; cursor:pointer; transition:transform 0.12s ease, opacity 0.12s ease;
+    width:100%; background:var(--accent); color:#fff; border:none; border-radius:14px;
+    padding:16px; font-family:'Pretendard',sans-serif; font-weight:700; font-size:15px;
+    letter-spacing:-0.01em; cursor:pointer; transition:transform 0.12s ease, opacity 0.12s ease;
   }
-  button.primary:hover{ opacity:0.88; transform:translateY(-1px); }
+  button.primary:hover{ opacity:0.9; transform:translateY(-1px); }
   button.primary:disabled{ opacity:0.55; cursor:default; transform:none; }
-  .meta-line{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); margin-top:12px; }
+  .meta-line{ text-align:center; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); margin-top:12px; }
 
   /* ---------- quiz ---------- */
-  .scan-top{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-soft); margin-bottom:2px; }
-  .q-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); margin:22px 0 8px; }
+  .scan-top{ display:flex; justify-content:space-between; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--ink-soft); margin-bottom:2px; }
+  .q-eyebrow{ font-family:'Pretendard',sans-serif; font-size:11px; color:var(--ink-soft); margin:22px 0 8px; }
   .q-text{ font-size:19px; line-height:1.55; font-weight:700; margin-bottom:24px; min-height:78px; }
 
-  .scale-ends{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-soft); margin-bottom:8px; }
+  .scale-ends{ display:flex; justify-content:space-between; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--ink-soft); margin-bottom:8px; }
   .likert{ display:flex; gap:8px; margin-bottom:16px; }
   .likert-btn{
     flex:1; height:50px; display:flex; align-items:center; justify-content:center;
-    border:1.5px solid var(--line); border-radius:9px; font-family:'IBM Plex Mono',monospace;
+    border:1.5px solid var(--line); border-radius:9px; font-family:'Pretendard',sans-serif;
     font-size:15px; font-weight:600; color:var(--ink-soft); background:#fff; cursor:pointer;
     transition:all 0.14s ease;
   }
-  .likert-btn:hover{ border-color:var(--ink); color:var(--ink); }
-  .likert-btn.selected{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  .likert-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .likert-btn.selected{ background:var(--accent); border-color:var(--accent); color:#fff; }
 
   .nav-row{ display:flex; justify-content:space-between; align-items:center; padding:0 24px 22px; }
-  .back-link{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); background:none; border:none; cursor:pointer; padding:8px 2px; }
+  .back-link{ font-family:'Pretendard',sans-serif; font-size:11.5px; color:var(--ink-soft); background:none; border:none; cursor:pointer; padding:8px 2px; }
   .back-link:disabled{ opacity:0; pointer-events:none; }
-  .skip-hint{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); }
+  .skip-hint{ font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); }
 
   /* ---------- result: BOARDING PASS ---------- */
   .pass-fields{ display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; margin:4px 0 6px; }
   .pf{ }
-  .pf-label{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--ink-soft); letter-spacing:0.1em; margin-bottom:3px; }
-  .pf-value{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:700; }
+  .pf-label{ font-family:'Pretendard',sans-serif; font-size:9.5px; color:var(--ink-soft); letter-spacing:0.1em; margin-bottom:3px; }
+  .pf-value{ font-family:'Pretendard',sans-serif; font-size:13.5px; font-weight:700; }
 
   .stamp-wrap{ display:flex; justify-content:center; margin:14px 0 6px; }
   .type-name-block{ text-align:center; margin:6px 0 4px; }
   h2.type-name{ font-size:33px; margin:2px 0 6px; }
-  .type-sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:var(--ink-soft); }
+  .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.14em; color:var(--ink-soft); }
   .type-tagline{ font-size:14px; color:var(--ink-soft); line-height:1.6; text-align:center; margin:8px 0 0; }
   .hybrid-note{
-    display:block; width:fit-content; margin:12px auto 0; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    display:block; width:fit-content; margin:12px auto 0; font-family:'Pretendard',sans-serif; font-size:10.5px;
     border:1px dashed var(--line); border-radius:100px; padding:5px 11px;
   }
   .type-desc{ font-size:14px; line-height:1.75; margin:16px 0 4px; }
 
   .radar-wrap{ display:flex; justify-content:center; padding:10px 0 4px; }
 
-  .clearance h3, .traits h3{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
+  .clearance h3, .traits h3{ font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
   .axis-row{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
   .axis-name{ width:74px; flex-shrink:0; font-size:11.5px; font-weight:700; }
   .axis-track{ flex:1; height:8px; background:var(--paper); border:1px solid var(--line); border-radius:100px; overflow:hidden; }
   .axis-fill{ height:100%; border-radius:100px; }
-  .axis-score{ width:30px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); flex-shrink:0; }
+  .axis-score{ width:30px; text-align:right; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); flex-shrink:0; }
 
   .traits{ margin:4px 0 4px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
   .traits ul{ margin:0; padding-left:16px; font-size:13px; line-height:1.7; }
 
   .cta-row{ display:flex; gap:9px; padding:20px 24px 24px; }
   .cta-row button{
-    flex:1; border-radius:11px; padding:13px; font-family:'IBM Plex Mono',monospace;
-    font-weight:700; font-size:12.5px; letter-spacing:0.04em; cursor:pointer; border:1.5px solid var(--ink);
+    flex:1; border-radius:13px; padding:13px; font-family:'Pretendard',sans-serif;
+    font-weight:700; font-size:12.5px; letter-spacing:-0.01em; cursor:pointer; border:1.5px solid var(--line);
   }
   .cta-row .restart{ background:#fff; color:var(--ink); }
-  .cta-row .share{ background:var(--ink); color:var(--paper); }
+  .cta-row .share{ background:var(--accent); border-color:var(--accent); color:#fff; }
 
   /* ---------- admin dashboard ---------- */
-  .admin-shell{ background:var(--card); border:2px solid var(--ink); border-radius:14px; box-shadow:0 3px 0 var(--ink); padding:22px 22px 26px; }
-  .admin-header{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px; padding-bottom:16px; border-bottom:2px solid var(--ink); }
+  .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 2px 8px rgba(25,31,40,0.04), 0 12px 28px rgba(25,31,40,0.06); padding:22px 22px 26px; }
+  .admin-header{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line); }
   .admin-title{ font-size:21px; }
   .admin-sub{ font-size:11px; color:var(--ink-soft); letter-spacing:0.1em; margin-top:5px; }
   .admin-actions{ display:flex; gap:8px; }
   .admin-btn{
-    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; padding:10px 14px;
-    border-radius:9px; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); cursor:pointer;
+    font-family:'Pretendard',sans-serif; font-size:12px; font-weight:700; padding:10px 14px;
+    border-radius:10px; border:1.5px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer;
   }
-  .admin-btn.ghost{ background:#fff; color:var(--ink); }
+  .admin-btn.ghost{ background:#fff; color:var(--accent); }
   .admin-btn:disabled{ opacity:0.5; cursor:default; }
-  .admin-empty{ padding:44px 0; text-align:center; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
+  .admin-empty{ padding:44px 0; text-align:center; color:var(--ink-soft); font-family:'Pretendard',sans-serif; font-size:12.5px; }
   .admin-table-wrap{ overflow-x:auto; }
   .admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
   .admin-table th{
-    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.05em;
-    color:var(--ink-soft); padding:9px 12px; border-bottom:2px solid var(--ink); white-space:nowrap;
+    text-align:left; font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.05em;
+    color:var(--ink-soft); padding:9px 12px; border-bottom:1.5px solid var(--line); white-space:nowrap;
   }
   .admin-table td{ padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap; font-size:13px; }
   .admin-table tbody tr:hover{ background:var(--paper); }
@@ -473,7 +473,7 @@ function renderQuiz(){
         <div class="scan-top"><span>${progress}% BOARDED</span></div>
 
         <div class="q-eyebrow mono">QUESTION ${qIndex+1}</div>
-        <div class="q-text" style="font-family:'Noto Sans KR',sans-serif;">${q.text}</div>
+        <div class="q-text" style="font-family:'Pretendard',sans-serif;">${q.text}</div>
 
         <div class="scale-ends"><span>전혀 아니다</span><span>매우 그렇다</span></div>
         <div class="likert">
@@ -555,20 +555,20 @@ function buildRadarSVG(pct, accent){
 
   let gridPaths = rings.map(f=>{
     const pts = AXIS_ORDER.map((k,i)=>polarPoint(cx,cy,maxR*f, i*360/n));
-    return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#D8CFB6" stroke-width="1"/>`;
+    return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#E5E8EB" stroke-width="1"/>`;
   }).join('');
   let axisLines = AXIS_ORDER.map((k,i)=>{
     const [x,y] = polarPoint(cx,cy,maxR,i*360/n);
-    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#D8CFB6" stroke-width="1"/>`;
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E5E8EB" stroke-width="1"/>`;
   }).join('');
 
   const centerPts = AXIS_ORDER.map(()=>`${cx},${cy}`).join(' ');
   let dataPoly = `<polygon id="radarDataPoly" points="${centerPts}" fill="${accent}33" stroke="${accent}" stroke-width="2.5"/>`;
-  let dots = AXIS_ORDER.map((k,i)=>`<circle id="radarDot${i}" cx="${cx}" cy="${cy}" r="3.5" fill="#152238"/>`).join('');
+  let dots = AXIS_ORDER.map((k,i)=>`<circle id="radarDot${i}" cx="${cx}" cy="${cy}" r="3.5" fill="#191F28"/>`).join('');
 
   let labels = AXIS_ORDER.map((k,i)=>{
     const [x,y] = polarPoint(cx,cy,maxR+20,i*360/n);
-    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="IBM Plex Mono" font-size="10" font-weight="700" fill="#152238">${AXIS_LABEL[k]}</text>`;
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Pretendard" font-size="10" font-weight="700" fill="#191F28">${AXIS_LABEL[k]}</text>`;
   }).join('');
 
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${gridPaths}${axisLines}${dataPoly}${dots}${labels}</svg>`;
@@ -615,7 +615,7 @@ function buildStampSVG(sym, accent, name){
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${accent}" stroke-width="2.5" />
     <circle cx="${cx}" cy="${cy}" r="${r-8}" fill="none" stroke="${accent}" stroke-width="1" stroke-dasharray="2 3" />
-    <text font-family="IBM Plex Mono" font-size="8.3" font-weight="700" fill="${accent}" letter-spacing="1">
+    <text font-family="Pretendard" font-size="8.3" font-weight="700" fill="${accent}" letter-spacing="1">
       <textPath href="#stampCircle" startOffset="0%">${repeated}</textPath>
     </text>
   </svg>`;
