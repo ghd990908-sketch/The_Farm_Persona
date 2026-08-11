@@ -4,6 +4,7 @@
 create table if not exists results (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  phone_last4 text not null,
   answers jsonb not null,
   scores jsonb not null,
   primary_type text not null,

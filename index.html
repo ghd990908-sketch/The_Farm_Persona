@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THE FARM — BOARDING PASS SCAN</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
   :root{
     --paper:#F2F4F6;
@@ -168,13 +170,16 @@
   .traits{ margin:4px 0 4px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
   .traits ul{ margin:0; padding-left:16px; font-size:13px; line-height:1.7; }
 
-  .cta-row{ display:flex; gap:9px; padding:20px 24px 24px; }
+  .cta-row{ display:flex; flex-wrap:wrap; gap:9px; padding:20px 24px 24px; }
   .cta-row button{
-    flex:1; border-radius:13px; padding:13px; font-family:'Pretendard',sans-serif;
+    flex:1; min-width:120px; border-radius:13px; padding:13px; font-family:'Pretendard',sans-serif;
     font-weight:700; font-size:12.5px; letter-spacing:-0.01em; cursor:pointer; border:1.5px solid var(--line);
   }
+  .cta-row button:disabled{ opacity:0.55; cursor:default; }
+  .cta-row .full{ flex-basis:100%; }
   .cta-row .restart{ background:#fff; color:var(--ink); }
   .cta-row .share{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .cta-row .share-outline{ background:#fff; border-color:var(--accent); color:var(--accent); }
 
   /* ---------- admin dashboard ---------- */
   .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 2px 8px rgba(25,31,40,0.04), 0 12px 28px rgba(25,31,40,0.06); padding:22px 22px 26px; }
@@ -274,7 +279,9 @@ const QUESTIONS = [
 let screen = 'entry';        // 'entry' | 'quiz' | 'result' | 'admin'
 let entryTab = 'guest';      // 'guest' | 'admin'
 let guestName = '';
+let guestPhone = '';
 let entryError = '';
+let entryLoading = false;
 
 let adminCode = '';
 let adminError = '';
@@ -336,7 +343,7 @@ function renderEntry(){
       <div class="perf"></div>
       <div class="stub">
         ${entryTab==='guest' ? `
-          <button class="primary" onclick="handleGuestStart()">탑승 수속 시작 →</button>
+          <button class="primary" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '탑승 수속 시작 →'}</button>
           <div class="meta-line">약 2분 소요 · 16문항 · 결과 즉시 발급</div>
         ` : `
           <button class="primary" onclick="handleAdminLogin()" ${adminLoading?'disabled':''}>${adminLoading?'확인 중...':'로그인'}</button>
@@ -372,6 +379,10 @@ function guestPanelHTML(){
     <div class="field-label mono" style="margin-top:22px;">이름</div>
     <input id="guestNameField" class="field-input" type="text" placeholder="이름을 입력해주세요" maxlength="30"
       oninput="guestName=this.value" onkeydown="if(event.key==='Enter')handleGuestStart()" />
+    <div class="field-label mono" style="margin-top:10px;">전화번호 뒤 4자리</div>
+    <input id="guestPhoneField" class="field-input mono" type="tel" inputmode="numeric" placeholder="0000" maxlength="4"
+      oninput="guestPhone=this.value" onkeydown="if(event.key==='Enter')handleGuestStart()" />
+    <div class="mono" style="font-size:10.5px;color:var(--ink-soft);margin:2px 0 0;">동명이인 구분 및 재조회 확인용으로만 사용해요.</div>
     ${entryError ? `<div class="field-error">${entryError}</div>` : ''}
   `;
 }
@@ -388,15 +399,47 @@ function adminPanelHTML(){
   `;
 }
 
-function handleGuestStart(){
-  const val = (guestName || '').trim();
-  if(!val){
+async function handleGuestStart(){
+  const name = (guestName || '').trim();
+  const phone = (guestPhone || '').trim();
+  if(!name){
     entryError = '이름을 입력해주세요.';
     render();
     return;
   }
-  guestName = val;
+  if(!/^\d{4}$/.test(phone)){
+    entryError = '전화번호 뒤 4자리를 숫자로 입력해주세요.';
+    render();
+    return;
+  }
+  guestName = name;
+  guestPhone = phone;
   entryError = '';
+  entryLoading = true;
+  render();
+
+  try{
+    const res = await fetch(`/api/lookup-result?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`);
+    const data = await res.json().catch(()=>({}));
+    if(res.ok && data.ok && data.result){
+      entryLoading = false;
+      const r = data.result;
+      render_result_data = {
+        raw:null,
+        pct: (r.scores && r.scores.pct) || {},
+        primary: r.primary_type,
+        secondary: r.secondary_type,
+        isHybrid: !!r.is_hybrid
+      };
+      screen = 'result';
+      render();
+      return;
+    }
+  }catch(e){
+    /* 조회 실패 시에는 새 검사로 진행 */
+  }
+
+  entryLoading = false;
   screen = 'quiz';
   qIndex = 0;
   answers = new Array(QUESTIONS.length).fill(null);
@@ -513,6 +556,7 @@ function submitResult(data){
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       name: guestName,
+      phoneLast4: guestPhone,
       answers: answers,
       scores: { raw: data.raw, pct: data.pct },
       primaryType: data.primary,
@@ -667,8 +711,9 @@ function renderResult(){
 
       <div class="perf"></div>
       <div class="cta-row">
-        <button class="restart" onclick="restart()">다시 탑승하기</button>
-        <button class="share" onclick="shareResult()">탑승권 공유하기</button>
+        <button class="restart full" onclick="restart()">다시 탑승하기</button>
+        <button class="share" id="saveImageBtn" onclick="saveAsImage()">이미지로 저장</button>
+        <button class="share-outline" id="savePdfBtn" onclick="saveAsPDF()">PDF로 저장</button>
       </div>
     </div>
   `;
@@ -677,18 +722,65 @@ function renderResult(){
 }
 
 function restart(){
-  screen='entry'; entryTab='guest'; qIndex=0; guestName=''; entryError='';
+  screen='entry'; entryTab='guest'; qIndex=0; guestName=''; guestPhone=''; entryError='';
   answers = new Array(QUESTIONS.length).fill(null); render();
 }
-function shareResult(){
-  const { primary } = render_result_data;
-  const P = PERSONAS[primary];
-  const text = `THE FARM 탑승권 발급 결과: "${P.name}(${P.sub})" 타입이 나왔어요! ✈️`;
-  if(navigator.share){
-    navigator.share({ title:'THE FARM 탑승권', text }).catch(()=>{});
-  } else {
-    navigator.clipboard?.writeText(text);
-    alert('결과 문구가 복사되었어요. 원하는 곳에 붙여넣어 공유해보세요!');
+
+async function captureResultCanvas(){
+  const card = document.querySelector('.card');
+  if(!card || !window.html2canvas) return null;
+  const ctaRow = card.querySelector('.cta-row');
+  const prevDisplay = ctaRow ? ctaRow.style.display : '';
+  if(ctaRow) ctaRow.style.display = 'none';
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    return await window.html2canvas(card, { backgroundColor:'#ffffff', scale:2, useCORS:true });
+  } finally {
+    if(ctaRow) ctaRow.style.display = prevDisplay;
+  }
+}
+
+function resultFileBase(){
+  const primary = render_result_data ? render_result_data.primary : 'result';
+  const nameForFile = (guestName || 'guest').replace(/[^\w가-힣]/g, '');
+  return `THE_FARM_${primary}_${nameForFile}`;
+}
+
+async function saveAsImage(){
+  const btn = document.getElementById('saveImageBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const canvas = await captureResultCanvas();
+    if(!canvas){ alert('이미지 저장 기능을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.'); return; }
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `${resultFileBase()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function saveAsPDF(){
+  const btn = document.getElementById('savePdfBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const card = document.querySelector('.card');
+    if(!card || !window.jspdf){ alert('PDF 저장 기능을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.'); return; }
+    const rect = card.getBoundingClientRect();
+    const canvas = await captureResultCanvas();
+    if(!canvas) return;
+    const pxToMm = 0.264583;
+    const wMm = rect.width * pxToMm;
+    const hMm = rect.height * pxToMm;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: wMm > hMm ? 'landscape' : 'portrait', unit:'mm', format:[wMm, hMm] });
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, wMm, hMm);
+    pdf.save(`${resultFileBase()}.pdf`);
+  } finally {
+    if(btn) btn.disabled = false;
   }
 }
 
