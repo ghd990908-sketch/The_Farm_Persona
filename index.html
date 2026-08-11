@@ -598,6 +598,7 @@ function buildStampSVG(sym, accent, name){
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${accent}" stroke-width="2.5" />
     <circle cx="${cx}" cy="${cy}" r="${r-8}" fill="none" stroke="${accent}" stroke-width="1" stroke-dasharray="2 3" />
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="46">${sym}</text>
     <text font-family="Pretendard" font-size="8.3" font-weight="700" fill="${accent}" letter-spacing="1">
       <textPath href="#stampCircle" startOffset="0%">${repeated}</textPath>
     </text>
