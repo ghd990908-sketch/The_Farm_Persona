@@ -193,6 +193,12 @@
   }
   .admin-btn.ghost{ background:#fff; color:var(--accent); }
   .admin-btn:disabled{ opacity:0.5; cursor:default; }
+  .admin-row-btn{
+    font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; padding:6px 10px;
+    border-radius:7px; border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; white-space:nowrap;
+  }
+  .admin-row-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .admin-row-btn:disabled{ opacity:0.5; cursor:default; }
   .admin-empty{ padding:44px 0; text-align:center; color:var(--ink-soft); font-family:'Pretendard',sans-serif; font-size:12.5px; }
   .admin-table-wrap{ overflow-x:auto; }
   .admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -652,15 +658,15 @@ function buildStampSVG(sym, accent, name){
 /* ---------------------------------------------------------
    8. RESULT — BOARDING PASS
 --------------------------------------------------------- */
-function renderResult(){
-  const { pct, primary, secondary, isHybrid } = render_result_data;
+function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
+  ctaHTML = ctaHTML || '';
   const P = PERSONAS[primary];
   const S = PERSONAS[secondary];
   const flightNo = 'TF' + String(100 + (pct[primary]*3 + pct[secondary]) % 800);
   const gate = String.fromCharCode(65 + AXIS_ORDER.indexOf(primary)) + (10 + (pct[primary]%9));
   const seat = (12 + (pct[secondary]%20)) + ['A','B','C','D'][ (pct[primary]+pct[secondary]) % 4 ];
 
-  stage.innerHTML = `
+  return `
     <div class="card">
       <div class="card-topline">
         <span class="tag">✈ THE FARM AIR</span>
@@ -670,7 +676,7 @@ function renderResult(){
         ${routeIndicator(100)}
 
         <div class="pass-fields">
-          <div class="pf"><div class="pf-label">FROM</div><div class="pf-value">${escapeHtml(guestName || 'YOU (SELF)')}</div></div>
+          <div class="pf"><div class="pf-label">FROM</div><div class="pf-value">${escapeHtml(name || 'YOU (SELF)')}</div></div>
           <div class="pf"><div class="pf-label">TO</div><div class="pf-value">THE FARM</div></div>
           <div class="pf"><div class="pf-label">GATE</div><div class="pf-value">${gate}</div></div>
           <div class="pf"><div class="pf-label">SEAT</div><div class="pf-value">${seat}</div></div>
@@ -708,15 +714,23 @@ function renderResult(){
           <ul>${P.traits.map(t=>`<li>${t}</li>`).join('')}</ul>
         </div>
       </div>
-
       <div class="perf"></div>
-      <div class="cta-row">
-        <button class="restart full" onclick="restart()">다시 탑승하기</button>
-        <button class="share" id="saveImageBtn" onclick="saveAsImage()">이미지로 저장</button>
-        <button class="share-outline" id="savePdfBtn" onclick="saveAsPDF()">PDF로 저장</button>
-      </div>
+      ${ctaHTML}
     </div>
   `;
+}
+
+function renderResult(){
+  const { pct, primary, secondary, isHybrid } = render_result_data;
+  const cta = `
+    <div class="cta-row">
+      <button class="restart full" onclick="restart()">다시 탑승하기</button>
+      <button class="share" id="saveImageBtn" onclick="saveAsImage()">이미지로 저장</button>
+      <button class="share-outline" id="savePdfBtn" onclick="saveAsPDF()">PDF로 저장</button>
+    </div>
+  `;
+
+  stage.innerHTML = resultCardHTML(guestName, pct, primary, secondary, isHybrid, cta);
 
   requestAnimationFrame(()=> animateRadarGrow(pct, 950));
 }
@@ -784,6 +798,42 @@ async function saveAsPDF(){
   }
 }
 
+async function downloadRowImage(i, btn){
+  const r = adminResults && adminResults[i];
+  if(!r || !window.html2canvas) return;
+
+  const prevText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '저장 중...'; }
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:460px;';
+  document.body.appendChild(wrapper);
+
+  try{
+    const pct = (r.scores && r.scores.pct) || {};
+    const primary = r.primary_type, secondary = r.secondary_type;
+    wrapper.innerHTML = resultCardHTML(r.name, pct, primary, secondary, !!r.is_hybrid);
+    animateRadarGrow(pct, 1);
+    await new Promise(resolve => setTimeout(resolve, 80));
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+
+    const cardEl = wrapper.querySelector('.card');
+    const canvas = await window.html2canvas(cardEl, { backgroundColor:'#ffffff', scale:2, useCORS:true });
+    const nameForFile = (r.name || 'guest').replace(/[^\w가-힣]/g, '');
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `THE_FARM_${primary}_${nameForFile}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }catch(e){
+    alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
+  } finally {
+    document.body.removeChild(wrapper);
+    if(btn){ btn.disabled = false; btn.textContent = prevText; }
+  }
+}
+
 /* ---------------------------------------------------------
    9. ADMIN DASHBOARD
 --------------------------------------------------------- */
@@ -821,10 +871,10 @@ function adminResultsBodyHTML(){
         <thead><tr>
           <th>이름</th><th>주유형</th><th>부유형</th><th>하이브리드</th>
           ${AXIS_ORDER.map(k=>`<th>${AXIS_LABEL[k]}</th>`).join('')}
-          <th>완료시각</th>
+          <th>완료시각</th><th>다운로드</th>
         </tr></thead>
         <tbody>
-          ${adminResults.map(r=>{
+          ${adminResults.map((r,i)=>{
             const s = (r.scores && r.scores.pct) ? r.scores.pct : {};
             const primaryP = PERSONAS[r.primary_type];
             const secondaryP = PERSONAS[r.secondary_type];
@@ -835,6 +885,7 @@ function adminResultsBodyHTML(){
               <td>${r.is_hybrid ? 'Y' : '-'}</td>
               ${AXIS_ORDER.map(k=>`<td>${s[k] ?? '-'}</td>`).join('')}
               <td class="mono">${formatDate(r.submitted_at)}</td>
+              <td><button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button></td>
             </tr>`;
           }).join('')}
         </tbody>
