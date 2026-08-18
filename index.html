@@ -144,19 +144,14 @@
     display:block; width:fit-content; margin:12px auto 0; font-family:'Pretendard',sans-serif; font-size:10.5px;
     border:1px dashed var(--line); border-radius:100px; padding:5px 11px;
   }
-  .type-desc{ font-size:14px; line-height:1.75; margin:16px 0 4px; }
-
   .radar-wrap{ display:flex; justify-content:center; padding:10px 0 4px; }
 
-  .clearance h3, .traits h3{ font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
+  .clearance h3{ font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
   .axis-row{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
   .axis-name{ width:74px; flex-shrink:0; font-size:11.5px; font-weight:700; }
   .axis-track{ flex:1; height:8px; background:var(--paper); border:1px solid var(--line); border-radius:100px; overflow:hidden; }
   .axis-fill{ height:100%; border-radius:100px; }
   .axis-score{ width:30px; text-align:right; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); flex-shrink:0; }
-
-  .traits{ margin:4px 0 4px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
-  .traits ul{ margin:0; padding-left:16px; font-size:13px; line-height:1.7; }
 
   .cta-row{ display:flex; flex-wrap:wrap; gap:9px; padding:20px 24px 24px; }
   .cta-row button{
@@ -628,11 +623,7 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
 
   return `
     <div class="card">
-      <div class="card-topline">
-        <span class="tag">THE FARM : Plug-IN</span>
-        <span class="tag">${P.code}</span>
-      </div>
-      <div class="card-inner">
+      <div class="card-inner" style="padding-top:24px;">
         <div class="id-row">
           <div class="id-field"><div class="id-label">NAME</div><div class="id-value">${escapeHtml(name || 'GUEST')}</div></div>
           <div class="id-field"><div class="id-label">TYPE</div><div class="id-value">${P.code}</div></div>
@@ -641,14 +632,11 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
         <div class="badge-wrap">${buildPersonaBadge(P.sym, P.colorHex)}</div>
 
         <div class="type-name-block">
-          <div class="type-sub mono">PERSONA · ${P.name}</div>
           <h2 class="type-name display" style="color:${P.colorHex};">${P.name}</h2>
           <div class="type-sub mono" style="letter-spacing:0.06em;">${P.sub}</div>
           <p class="type-tagline">${P.tagline}</p>
           ${isHybrid ? `<div class="hybrid-note mono">${P.name} × ${S.name} 하이브리드 판독</div>` : ''}
         </div>
-
-        <p class="type-desc">${P.desc}</p>
 
         <div class="radar-wrap">${buildRadarSVG(pct, P.colorHex)}</div>
 
@@ -663,11 +651,6 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
               <div class="axis-score mono">${v}</div>
             </div>`;
           }).join('')}
-        </div>
-
-        <div class="traits">
-          <h3 class="mono" style="margin-top:0;">${P.name} 특징</h3>
-          <ul>${P.traits.map(t=>`<li>${t}</li>`).join('')}</ul>
         </div>
       </div>
       <div class="divider"></div>
