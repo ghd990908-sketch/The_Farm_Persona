@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THE FARM — BOARDING PASS SCAN</title>
+<title>THE FARM — PERSONA SCAN</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -58,30 +58,12 @@
 
   .card-inner{ padding:26px 24px 8px; }
 
-  /* route indicator (used in intro + quiz progress) */
-  .route{ display:flex; align-items:center; gap:10px; margin:4px 0 4px; }
-  .route .stop{ font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.06em; flex-shrink:0; }
-  .route .stop.dim{ color:var(--ink-soft); }
-  .route-line{ position:relative; flex:1; height:16px; }
-  .route-line .dots{
-    position:absolute; top:50%; left:0; right:0; height:0;
-    border-top:2px dashed var(--line); transform:translateY(-50%);
-  }
-  .route-line .plane{
-    position:absolute; top:50%; transform:translate(-50%,-50%);
-    font-size:15px; transition:left 0.3s ease;
-  }
+  /* ---------- progress bar (quiz) ---------- */
+  .progress-bar{ height:5px; background:var(--line); border-radius:100px; overflow:hidden; margin:4px 0 4px; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:100px; transition:width 0.25s ease; }
 
-  /* ---------- perforation divider ---------- */
-  .perf{
-    position:relative; height:0; border-top:2px dashed var(--line); margin:22px -2px 0;
-  }
-  .perf::before, .perf::after{
-    content:''; position:absolute; top:-11px; width:22px; height:22px; border-radius:50%;
-    background:var(--paper); border:1px solid var(--line);
-  }
-  .perf::before{ left:-13px; }
-  .perf::after{ right:-13px; }
+  /* ---------- section divider ---------- */
+  .divider{ height:0; border-top:1px solid var(--line); margin:22px 0 0; }
 
   /* ---------- entry tabs ---------- */
   .entry-tabs{ display:flex; gap:8px; margin-bottom:18px; }
@@ -141,13 +123,17 @@
   .back-link:disabled{ opacity:0; pointer-events:none; }
   .skip-hint{ font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); }
 
-  /* ---------- result: BOARDING PASS ---------- */
-  .pass-fields{ display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; margin:4px 0 6px; }
-  .pf{ }
-  .pf-label{ font-family:'Pretendard',sans-serif; font-size:9.5px; color:var(--ink-soft); letter-spacing:0.1em; margin-bottom:3px; }
-  .pf-value{ font-family:'Pretendard',sans-serif; font-size:13.5px; font-weight:700; }
+  /* ---------- result: PERSONA CARD ---------- */
+  .id-row{ display:flex; gap:24px; margin:4px 0 6px; }
+  .id-field{ }
+  .id-label{ font-family:'Pretendard',sans-serif; font-size:9.5px; color:var(--ink-soft); letter-spacing:0.1em; margin-bottom:3px; }
+  .id-value{ font-family:'Pretendard',sans-serif; font-size:13.5px; font-weight:700; }
 
-  .stamp-wrap{ display:flex; justify-content:center; margin:14px 0 6px; }
+  .badge-wrap{ display:flex; justify-content:center; margin:18px 0 8px; }
+  .persona-badge{
+    width:104px; height:104px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:48px;
+  }
   .type-name-block{ text-align:center; margin:6px 0 4px; }
   h2.type-name{ font-size:33px; margin:2px 0 6px; }
   .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.14em; color:var(--ink-soft); }
@@ -215,7 +201,6 @@
     h1.title{ font-size:23px; }
     .q-text{ font-size:17px; min-height:88px; }
     h2.type-name{ font-size:27px; }
-    .pass-fields{ grid-template-columns:1fr 1fr; }
     .admin-shell{ padding:18px 16px 20px; }
   }
 </style>
@@ -309,17 +294,8 @@ function render(){
   else renderResult();
 }
 
-function routeIndicator(pct){
-  return `
-    <div class="route">
-      <span class="stop">YOU</span>
-      <div class="route-line">
-        <div class="dots"></div>
-        <span class="plane" style="left:${pct}%;">✈️</span>
-      </div>
-      <span class="stop dim">FARM</span>
-    </div>
-  `;
+function progressBar(pct){
+  return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>`;
 }
 
 function escapeHtml(str){
@@ -336,8 +312,8 @@ function renderEntry(){
   stage.innerHTML = `
     <div class="card">
       <div class="card-topline">
-        <span class="tag">✈ THE FARM : Plug-IN</span>
-        <span class="tag">${entryTab==='guest' ? 'TALENT SCAN' : 'STAFF LOGIN'}</span>
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">${entryTab==='guest' ? 'PERSONA SCAN' : 'STAFF LOGIN'}</span>
       </div>
       <div class="card-inner">
         <div class="entry-tabs">
@@ -346,11 +322,11 @@ function renderEntry(){
         </div>
         ${entryTab==='guest' ? guestPanelHTML() : adminPanelHTML()}
       </div>
-      <div class="perf"></div>
+      <div class="divider"></div>
       <div class="stub">
         ${entryTab==='guest' ? `
-          <button class="primary" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '탑승 수속 시작 →'}</button>
-          <div class="meta-line">약 2분 소요 · 16문항 · 결과 즉시 발급</div>
+          <button class="primary" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '검사 시작하기 →'}</button>
+          <div class="meta-line">약 2분 소요 · 16문항 · 결과 즉시 확인</div>
         ` : `
           <button class="primary" onclick="handleAdminLogin()" ${adminLoading?'disabled':''}>${adminLoading?'확인 중...':'로그인'}</button>
           <div class="meta-line">관리자 전용 · 코드 입력 필요</div>
@@ -369,13 +345,12 @@ function switchEntryTab(tab){
 
 function guestPanelHTML(){
   return `
-    <div class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:0.14em;">BOARDING PASS · FIELD TYPE</div>
-    <h1 class="title display">내 업무 유형에 맞는<br>탑승권을 발급받아 보세요.</h1>
+    <div class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:0.14em;">PERSONA SCAN · WORK STYLE</div>
+    <h1 class="title display">내 업무 유형에 맞는<br>페르소나를 확인해보세요</h1>
     <p class="lede">
       16개 문항에 답하면, 본인에게 가장 적합한 유형의 업무 페르소나를 확인할 수 있습니다.
       정답은 없어요 - 있는 그대로 답해주세요.
     </p>
-    ${routeIndicator(0)}
     <div class="type-preview">
       ${AXIS_ORDER.map(k=>{
         const p = PERSONAS[k];
@@ -497,12 +472,12 @@ function renderQuiz(){
   stage.innerHTML = `
     <div class="card">
       <div class="card-topline">
-        <span class="tag">✈ BOARDING IN PROGRESS</span>
+        <span class="tag">THE FARM : Plug-IN</span>
         <span class="tag">Q${String(qIndex+1).padStart(2,'0')}/${QUESTIONS.length}</span>
       </div>
       <div class="card-inner">
-        ${routeIndicator(progress)}
-        <div class="scan-top"><span>${progress}% BOARDED</span></div>
+        ${progressBar(progress)}
+        <div class="scan-top"><span>${progress}% 완료</span></div>
 
         <div class="q-eyebrow mono">QUESTION ${qIndex+1}</div>
         <div class="q-text" style="font-family:'Pretendard',sans-serif;">${q.text}</div>
@@ -635,57 +610,36 @@ function animateRadarGrow(targetPct, duration){
 }
 
 /* ---------------------------------------------------------
-   7. PASSPORT STAMP (signature element)
+   7. PERSONA BADGE (signature element)
 --------------------------------------------------------- */
-function buildStampSVG(sym, accent, name){
-  const size=132, cx=size/2, cy=size/2, r=54;
-  const label = `THE FARM · ${name} · `;
-  const repeated = label.repeat(3);
-  return `
-  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-9deg);">
-    <defs>
-      <path id="stampCircle" d="M ${cx-r},${cy} a ${r},${r} 0 1,1 ${r*2},0 a ${r},${r} 0 1,1 -${r*2},0" />
-    </defs>
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${accent}" stroke-width="2.5" />
-    <circle cx="${cx}" cy="${cy}" r="${r-8}" fill="none" stroke="${accent}" stroke-width="1" stroke-dasharray="2 3" />
-    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="46">${sym}</text>
-    <text font-family="Pretendard" font-size="8.3" font-weight="700" fill="${accent}" letter-spacing="1">
-      <textPath href="#stampCircle" startOffset="0%">${repeated}</textPath>
-    </text>
-  </svg>`;
+function buildPersonaBadge(sym, accent){
+  return `<div class="persona-badge" style="background:${accent}1A; border:3px solid ${accent};">${sym}</div>`;
 }
 
 /* ---------------------------------------------------------
-   8. RESULT — BOARDING PASS
+   8. RESULT — PERSONA CARD
 --------------------------------------------------------- */
 function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
   ctaHTML = ctaHTML || '';
   const P = PERSONAS[primary];
   const S = PERSONAS[secondary];
-  const flightNo = 'TF' + String(100 + (pct[primary]*3 + pct[secondary]) % 800);
-  const gate = String.fromCharCode(65 + AXIS_ORDER.indexOf(primary)) + (10 + (pct[primary]%9));
-  const seat = (12 + (pct[secondary]%20)) + ['A','B','C','D'][ (pct[primary]+pct[secondary]) % 4 ];
 
   return `
     <div class="card">
       <div class="card-topline">
-        <span class="tag">✈ THE FARM AIR</span>
-        <span class="tag">${flightNo}</span>
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">${P.code}</span>
       </div>
       <div class="card-inner">
-        ${routeIndicator(100)}
-
-        <div class="pass-fields">
-          <div class="pf"><div class="pf-label">FROM</div><div class="pf-value">${escapeHtml(name || 'YOU (SELF)')}</div></div>
-          <div class="pf"><div class="pf-label">TO</div><div class="pf-value">THE FARM</div></div>
-          <div class="pf"><div class="pf-label">GATE</div><div class="pf-value">${gate}</div></div>
-          <div class="pf"><div class="pf-label">SEAT</div><div class="pf-value">${seat}</div></div>
+        <div class="id-row">
+          <div class="id-field"><div class="id-label">NAME</div><div class="id-value">${escapeHtml(name || 'GUEST')}</div></div>
+          <div class="id-field"><div class="id-label">TYPE</div><div class="id-value">${P.code}</div></div>
         </div>
 
-        <div class="stamp-wrap">${buildStampSVG(P.sym, P.colorHex, P.name)}</div>
+        <div class="badge-wrap">${buildPersonaBadge(P.sym, P.colorHex)}</div>
 
         <div class="type-name-block">
-          <div class="type-sub mono">FIELD TYPE · ${P.name}</div>
+          <div class="type-sub mono">PERSONA · ${P.name}</div>
           <h2 class="type-name display" style="color:${P.colorHex};">${P.name}</h2>
           <div class="type-sub mono" style="letter-spacing:0.06em;">${P.sub}</div>
           <p class="type-tagline">${P.tagline}</p>
@@ -697,7 +651,7 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
         <div class="radar-wrap">${buildRadarSVG(pct, P.colorHex)}</div>
 
         <div class="clearance">
-          <h3 class="mono">FLIGHT LOG · STATS</h3>
+          <h3 class="mono">PERSONA STATS</h3>
           ${AXIS_ORDER.map(k=>{
             const p = PERSONAS[k];
             const v = Math.max(pct[k],0);
@@ -714,7 +668,7 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
           <ul>${P.traits.map(t=>`<li>${t}</li>`).join('')}</ul>
         </div>
       </div>
-      <div class="perf"></div>
+      <div class="divider"></div>
       ${ctaHTML}
     </div>
   `;
@@ -724,7 +678,7 @@ function renderResult(){
   const { pct, primary, secondary, isHybrid } = render_result_data;
   const cta = `
     <div class="cta-row">
-      <button class="restart full" onclick="restart()">다시 탑승하기</button>
+      <button class="restart full" onclick="restart()">다시 검사하기</button>
       <button class="share" id="saveImageBtn" onclick="saveAsImage()">이미지로 저장</button>
       <button class="share-outline" id="savePdfBtn" onclick="saveAsPDF()">PDF로 저장</button>
     </div>
