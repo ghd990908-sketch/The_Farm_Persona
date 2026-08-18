@@ -133,9 +133,9 @@
 
   .badge-wrap{ display:flex; justify-content:center; margin:18px 0 8px; }
   .persona-badge{
-    width:104px; height:104px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-size:48px;
+    width:104px; height:104px; border-radius:50%; overflow:hidden;
   }
+  .persona-badge img{ width:100%; height:100%; object-fit:cover; display:block; }
   .type-name-block{ text-align:center; margin:6px 0 4px; }
   h2.type-name{ font-size:33px; margin:2px 0 6px; }
   .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.14em; color:var(--ink-soft); }
@@ -615,8 +615,8 @@ function animateRadarGrow(targetPct, duration){
 /* ---------------------------------------------------------
    7. PERSONA BADGE (signature element)
 --------------------------------------------------------- */
-function buildPersonaBadge(sym, accent){
-  return `<div class="persona-badge" style="background:${accent}1A; border:3px solid ${accent};">${sym}</div>`;
+function buildPersonaBadge(key, accent){
+  return `<div class="persona-badge" style="box-shadow:0 0 0 3px var(--card), 0 0 0 6px ${accent};"><img src="assets/personas/${key}.jpg" alt="" /></div>`;
 }
 
 /* ---------------------------------------------------------
@@ -635,7 +635,7 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid, ctaHTML){
           <div class="id-field"><div class="id-label">TYPE</div><div class="id-value">${P.code}</div></div>
         </div>
 
-        <div class="badge-wrap">${buildPersonaBadge(P.sym, P.colorHex)}</div>
+        <div class="badge-wrap">${buildPersonaBadge(P.key, P.colorHex)}</div>
 
         <div class="type-name-block">
           <h2 class="type-name display" style="color:${P.colorHex};">${P.name}</h2>
@@ -688,6 +688,14 @@ function restart(){
   answers = new Array(QUESTIONS.length).fill(null); render();
 }
 
+function waitForImages(container){
+  const imgs = [...container.querySelectorAll('img')];
+  return Promise.all(imgs.map(img => {
+    if(img.complete) return Promise.resolve();
+    return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+  }));
+}
+
 async function captureResultCanvas(){
   const card = document.querySelector('.card');
   if(!card || !window.html2canvas) return null;
@@ -695,6 +703,7 @@ async function captureResultCanvas(){
   const prevDisplay = ctaRow ? ctaRow.style.display : '';
   if(ctaRow) ctaRow.style.display = 'none';
   try{
+    await waitForImages(card);
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
     return await window.html2canvas(card, { backgroundColor:'#17140F', scale:2, useCORS:true });
   } finally {
@@ -762,6 +771,7 @@ async function downloadRowImage(i, btn){
     const primary = r.primary_type, secondary = r.secondary_type;
     wrapper.innerHTML = resultCardHTML(r.name, pct, primary, secondary, !!r.is_hybrid);
     animateRadarGrow(pct, 1);
+    await waitForImages(wrapper);
     await new Promise(resolve => setTimeout(resolve, 80));
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
 
