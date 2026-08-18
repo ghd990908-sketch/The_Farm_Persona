@@ -61,8 +61,12 @@
   .card-inner{ padding:26px 24px 8px; }
 
   /* ---------- progress bar (quiz) ---------- */
-  .progress-bar{ height:5px; background:var(--line); border-radius:100px; overflow:hidden; margin:4px 0 4px; }
-  .progress-fill{ height:100%; background:var(--accent); border-radius:100px; transition:width 0.25s ease; }
+  .progress-bar{ position:relative; height:5px; background:var(--line); border-radius:100px; margin:4px 0 4px; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:100px; transition:width 0.3s ease; }
+  .progress-mask{
+    position:absolute; top:50%; transform:translate(-50%,-50%); font-size:17px;
+    transition:left 0.3s ease; filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+  }
 
   /* ---------- section divider ---------- */
   .divider{ height:0; border-top:1px solid var(--line); margin:22px 0 0; }
@@ -105,7 +109,7 @@
   .meta-line{ text-align:center; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); margin-top:12px; }
 
   /* ---------- quiz ---------- */
-  .scan-top{ display:flex; justify-content:space-between; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--ink-soft); margin-bottom:2px; }
+  .scan-top{ display:flex; justify-content:space-between; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--ink-soft); margin:12px 0 2px; }
   .q-eyebrow{ font-family:'Pretendard',sans-serif; font-size:11px; color:var(--ink-soft); margin:22px 0 8px; }
   .q-text{ font-size:19px; line-height:1.55; font-weight:700; margin-bottom:24px; min-height:78px; }
 
@@ -303,7 +307,8 @@ function render(){
 }
 
 function progressBar(pct){
-  return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>`;
+  const maskPos = Math.min(Math.max(pct, 4), 96);
+  return `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div><span class="progress-mask" style="left:${maskPos}%;">🎭</span></div>`;
 }
 
 function escapeHtml(str){
