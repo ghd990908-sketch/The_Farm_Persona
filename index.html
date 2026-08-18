@@ -368,7 +368,7 @@ function guestPanelHTML(){
     <div class="type-preview">
       ${AXIS_ORDER.map(k=>{
         const p = PERSONAS[k];
-        return `<div class="type-chip"><div class="chip-avatar" style="box-shadow:0 0 0 2px ${p.colorHex};"><img src="assets/personas/${p.key}.jpg" alt="" /></div><span class="code">${p.code}</span></div>`;
+        return `<div class="type-chip"><div class="chip-avatar" style="box-shadow:0 0 0 2px ${p.colorHex};"><img src="assets/personas/${p.key}_face.jpg" alt="" /></div><span class="code">${p.code}</span></div>`;
       }).join('')}
     </div>
     <div class="field-label mono" style="margin-top:22px;">이름</div>
