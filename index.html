@@ -9,17 +9,18 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --paper:#F2F4F6;
-    --card:#FFFFFF;
-    --ink:#191F28;
-    --ink-soft:#8B95A1;
-    --line:#E5E8EB;
-    --accent:#3182F6;
-    --accent-soft:#EEF4FF;
-    --operator:#B23A2E;
-    --explorer:#1F6F8B;
-    --thinker:#5B3A8E;
-    --builder:#2E7D5B;
+    --paper:#0B0906;
+    --card:#17140F;
+    --ink:#F2ECDD;
+    --ink-soft:#A99B7E;
+    --line:#332B1D;
+    --accent:#E3A83D;
+    --accent-soft:#3A2E14;
+    --on-accent:#171208;
+    --operator:#E2604A;
+    --explorer:#3FA6C4;
+    --thinker:#9B6FE0;
+    --builder:#4CBE84;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -43,15 +44,16 @@
     background:var(--card);
     border:1px solid var(--line);
     border-radius:20px;
-    box-shadow:0 2px 8px rgba(25,31,40,0.04), 0 12px 28px rgba(25,31,40,0.08);
+    box-shadow:0 24px 60px rgba(0,0,0,0.55), 0 0 40px rgba(227,168,61,0.05), 0 0 0 1px rgba(227,168,61,0.05);
     position:relative;
     overflow:visible;
   }
   .card-topline{
     display:flex; align-items:center; justify-content:space-between;
     padding:13px 20px;
-    background:var(--accent);
-    color:#fff;
+    background:#100D08;
+    color:var(--accent);
+    border-bottom:1px solid var(--line);
     border-radius:19px 19px 0 0;
   }
   .card-topline .tag{ font-family:'Pretendard',sans-serif; font-size:10px; letter-spacing:0.14em; display:flex; align-items:center; gap:6px; }
@@ -69,16 +71,16 @@
   .entry-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .entry-tab{
     flex:1; padding:11px; border-radius:9px; border:1.5px solid var(--line);
-    background:#fff; font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
+    background:var(--card); font-family:'Pretendard',sans-serif; font-size:12.5px; font-weight:700;
     letter-spacing:0.04em; color:var(--ink-soft); cursor:pointer; transition:all 0.14s ease;
   }
   .entry-tab:hover{ border-color:var(--accent); color:var(--accent); }
-  .entry-tab.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .entry-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
 
   .field-label{ font-family:'Pretendard',sans-serif; font-size:11px; color:var(--ink-soft); letter-spacing:0.08em; margin:4px 0 7px; }
   .field-input{
     width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:10px;
-    font-size:15.5px; font-family:'Pretendard',sans-serif; color:var(--ink); background:#fff; margin-bottom:4px;
+    font-size:15.5px; font-family:'Pretendard',sans-serif; color:var(--ink); background:#1D1911; margin-bottom:4px;
     transition:border-color 0.14s ease, box-shadow 0.14s ease;
   }
   .field-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
@@ -88,13 +90,13 @@
   .lede{ font-size:14.5px; color:var(--ink-soft); line-height:1.7; margin:12px 0 22px; }
   h1.title{ font-size:28px; line-height:1.35; margin:10px 0 0; }
   .type-preview{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin:22px 0 6px; }
-  .type-chip{ border:1.5px solid var(--line); border-radius:10px; padding:10px 3px 8px; text-align:center; background:#fff; }
+  .type-chip{ border:1.5px solid var(--line); border-radius:10px; padding:10px 3px 8px; text-align:center; background:#1D1911; }
   .type-chip .sym{ font-size:17px; display:block; margin-bottom:4px; }
   .type-chip .code{ font-family:'Pretendard',sans-serif; font-size:9px; color:var(--ink-soft); }
 
   .stub{ padding:16px 24px 24px; }
   button.primary{
-    width:100%; background:var(--accent); color:#fff; border:none; border-radius:14px;
+    width:100%; background:var(--accent); color:var(--on-accent); border:none; border-radius:14px;
     padding:16px; font-family:'Pretendard',sans-serif; font-weight:700; font-size:15px;
     letter-spacing:-0.01em; cursor:pointer; transition:transform 0.12s ease, opacity 0.12s ease;
   }
@@ -112,11 +114,11 @@
   .likert-btn{
     flex:1; height:50px; display:flex; align-items:center; justify-content:center;
     border:1.5px solid var(--line); border-radius:9px; font-family:'Pretendard',sans-serif;
-    font-size:15px; font-weight:600; color:var(--ink-soft); background:#fff; cursor:pointer;
+    font-size:15px; font-weight:600; color:var(--ink-soft); background:#1D1911; cursor:pointer;
     transition:all 0.14s ease;
   }
   .likert-btn:hover{ border-color:var(--accent); color:var(--accent); }
-  .likert-btn.selected{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .likert-btn.selected{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
 
   .nav-row{ display:flex; justify-content:space-between; align-items:center; padding:0 24px 22px; }
   .back-link{ font-family:'Pretendard',sans-serif; font-size:11.5px; color:var(--ink-soft); background:none; border:none; cursor:pointer; padding:8px 2px; }
@@ -163,25 +165,25 @@
   }
   .cta-row button:disabled{ opacity:0.55; cursor:default; }
   .cta-row .full{ flex-basis:100%; }
-  .cta-row .restart{ background:#fff; color:var(--ink); }
-  .cta-row .share{ background:var(--accent); border-color:var(--accent); color:#fff; }
-  .cta-row .share-outline{ background:#fff; border-color:var(--accent); color:var(--accent); }
+  .cta-row .restart{ background:var(--card); color:var(--ink); }
+  .cta-row .share{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+  .cta-row .share-outline{ background:var(--card); border-color:var(--accent); color:var(--accent); }
 
   /* ---------- admin dashboard ---------- */
-  .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 2px 8px rgba(25,31,40,0.04), 0 12px 28px rgba(25,31,40,0.06); padding:22px 22px 26px; }
+  .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(227,168,61,0.05); padding:22px 22px 26px; }
   .admin-header{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line); }
   .admin-title{ font-size:21px; }
   .admin-sub{ font-size:11px; color:var(--ink-soft); letter-spacing:0.1em; margin-top:5px; }
   .admin-actions{ display:flex; gap:8px; }
   .admin-btn{
     font-family:'Pretendard',sans-serif; font-size:12px; font-weight:700; padding:10px 14px;
-    border-radius:10px; border:1.5px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer;
+    border-radius:10px; border:1.5px solid var(--accent); background:var(--accent); color:var(--on-accent); cursor:pointer;
   }
-  .admin-btn.ghost{ background:#fff; color:var(--accent); }
+  .admin-btn.ghost{ background:var(--card); color:var(--accent); }
   .admin-btn:disabled{ opacity:0.5; cursor:default; }
   .admin-row-btn{
     font-family:'Pretendard',sans-serif; font-size:11px; font-weight:700; padding:6px 10px;
-    border-radius:7px; border:1.5px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; white-space:nowrap;
+    border-radius:7px; border:1.5px solid var(--line); background:#1D1911; color:var(--ink); cursor:pointer; white-space:nowrap;
   }
   .admin-row-btn:hover{ border-color:var(--accent); color:var(--accent); }
   .admin-row-btn:disabled{ opacity:0.5; cursor:default; }
@@ -214,25 +216,25 @@
 --------------------------------------------------------- */
 const PERSONAS = {
   explorer: {
-    key:'explorer', code:'GE', name:'GLOBAL EXPLORER', sub:'적응형', tagEn:'GLOBAL ADAPTER', sym:'🧭', colorHex:'#1F6F8B',
+    key:'explorer', code:'GE', name:'GLOBAL EXPLORER', sub:'적응형', tagEn:'GLOBAL ADAPTER', sym:'🧭', colorHex:'#3FA6C4',
     tagline:'낯선 환경에서도 빠르게 상황을 파악하고 관계를 만들어가는 타입.',
     desc:'새로운 장소와 사람, 익숙하지 않은 업무 환경에서도 비교적 빠르게 적응합니다. 해외 출장이나 처음 만나는 파트너와의 미팅처럼 변수가 많은 상황에서도 위축되기보다 상황을 파악하고 필요한 소통을 시작하는 편입니다. 완벽하게 익숙하지 않은 환경에서도 먼저 경험하며 배우기 때문에 해외 프로젝트, 현지 커뮤니케이션, 새로운 관계 형성이 필요한 업무에서 강점을 보입니다.',
     traits:['낯선 환경에 대한 적응력','새로운 사람과의 초기 커뮤니케이션','익숙하지 않은 상황에서도 움직이는 개방성']
   },
   builder: {
-    key:'builder', code:'BD', name:'BUILDER', sub:'구축형', tagEn:'TOOL BUILDER', sym:'🛠️', colorHex:'#2E7D5B',
+    key:'builder', code:'BD', name:'BUILDER', sub:'구축형', tagEn:'TOOL BUILDER', sym:'🛠️', colorHex:'#4CBE84',
     tagline:'흩어진 정보를 정리하고, 적합한 도구를 활용해 결과물로 만드는 타입.',
     desc:'복잡한 정보가 주어져도 핵심을 빠르게 정리하고 필요한 형태의 결과물로 만드는 데 강점이 있습니다. PPT, AI, 협업툴 등 새로운 도구도 필요하다면 빠르게 익혀 업무에 적용합니다. 단순히 툴을 많이 사용하는 사람이 아니라 정보를 찾고, 구조화하고, 실제 결과물로 완성하는 과정에 강한 유형입니다.',
     traits:['정보 탐색 및 구조화 능력','새로운 도구의 빠른 습득·활용','자료를 실제 결과물로 완성하는 능력']
   },
   operator: {
-    key:'operator', code:'OP', name:'OPERATOR', sub:'실행형', tagEn:'FAST MOVER', sym:'⚡', colorHex:'#B23A2E',
+    key:'operator', code:'OP', name:'OPERATOR', sub:'실행형', tagEn:'FAST MOVER', sym:'⚡', colorHex:'#E2604A',
     tagline:'해야 할 일이 보이면 판단하고 바로 실행으로 옮기는 타입.',
     desc:'업무의 모든 조건이 완벽하게 정리될 때까지 기다리기보다, 현재 주어진 정보를 바탕으로 우선 필요한 행동을 시작합니다. 특히 행사 현장처럼 예상하지 못한 변수가 생기거나 역할이 명확하지 않은 순간에도 상황을 파악하고 먼저 움직입니다. 현장 운영, 즉각적인 대응, 빠른 실행이 필요한 업무에서 강점을 보입니다.',
     traits:['실행 전환 속도','모호한 상황에서의 주도성','현장 변수에 대한 즉각적인 대응력']
   },
   thinker: {
-    key:'thinker', code:'CT', name:'CREATIVE THINKER', sub:'발상형', tagEn:'IDEA GENERATOR', sym:'💡', colorHex:'#5B3A8E',
+    key:'thinker', code:'CT', name:'CREATIVE THINKER', sub:'발상형', tagEn:'IDEA GENERATOR', sym:'💡', colorHex:'#9B6FE0',
     tagline:'주어진 답을 따르기보다 문제를 다시 보고 더 나은 방법을 찾는 타입.',
     desc:'기존 방식이 있더라도 그것이 최선인지 한 번 더 고민합니다. 문제가 생겼을 때 단순히 주어진 선택지 중 하나를 고르기보다 다른 접근법이나 새로운 대안을 만들어내는 편입니다. 아이디어 자체뿐 아니라 문제를 다른 관점에서 바라보고 해결 방향을 제안하는 능력이 강한 유형입니다.',
     traits:['다양한 대안 발상','기존 방식에 대한 개선 사고','문제를 새롭게 바라보는 관점']
@@ -563,20 +565,20 @@ function buildRadarSVG(pct, accent){
 
   let gridPaths = rings.map(f=>{
     const pts = AXIS_ORDER.map((k,i)=>polarPoint(cx,cy,maxR*f, i*360/n));
-    return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#E5E8EB" stroke-width="1"/>`;
+    return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#453A26" stroke-width="1"/>`;
   }).join('');
   let axisLines = AXIS_ORDER.map((k,i)=>{
     const [x,y] = polarPoint(cx,cy,maxR,i*360/n);
-    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E5E8EB" stroke-width="1"/>`;
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#453A26" stroke-width="1"/>`;
   }).join('');
 
   const centerPts = AXIS_ORDER.map(()=>`${cx},${cy}`).join(' ');
   let dataPoly = `<polygon id="radarDataPoly" points="${centerPts}" fill="${accent}33" stroke="${accent}" stroke-width="2.5"/>`;
-  let dots = AXIS_ORDER.map((k,i)=>`<circle id="radarDot${i}" cx="${cx}" cy="${cy}" r="3.5" fill="#191F28"/>`).join('');
+  let dots = AXIS_ORDER.map((k,i)=>`<circle id="radarDot${i}" cx="${cx}" cy="${cy}" r="3.5" fill="#F2ECDD"/>`).join('');
 
   let labels = AXIS_ORDER.map((k,i)=>{
     const [x,y] = polarPoint(cx,cy,maxR+20,i*360/n);
-    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Pretendard" font-size="9" font-weight="700" fill="#191F28">${AXIS_LABEL[k]}</text>`;
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Pretendard" font-size="9" font-weight="700" fill="#F2ECDD">${AXIS_LABEL[k]}</text>`;
   }).join('');
 
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${gridPaths}${axisLines}${dataPoly}${dots}${labels}</svg>`;
@@ -702,7 +704,7 @@ async function captureResultCanvas(){
   if(ctaRow) ctaRow.style.display = 'none';
   try{
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    return await window.html2canvas(card, { backgroundColor:'#ffffff', scale:2, useCORS:true });
+    return await window.html2canvas(card, { backgroundColor:'#17140F', scale:2, useCORS:true });
   } finally {
     if(ctaRow) ctaRow.style.display = prevDisplay;
   }
@@ -772,7 +774,7 @@ async function downloadRowImage(i, btn){
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
 
     const cardEl = wrapper.querySelector('.card');
-    const canvas = await window.html2canvas(cardEl, { backgroundColor:'#ffffff', scale:2, useCORS:true });
+    const canvas = await window.html2canvas(cardEl, { backgroundColor:'#17140F', scale:2, useCORS:true });
     const nameForFile = (r.name || 'guest').replace(/[^\w가-힣]/g, '');
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/png');
