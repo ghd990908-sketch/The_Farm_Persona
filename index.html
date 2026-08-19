@@ -144,7 +144,6 @@
   .type-name-block{ text-align:center; margin:6px 0 4px; }
   h2.type-name{ font-size:33px; line-height:1.25; margin:2px 0 4px; text-wrap:balance; word-break:keep-all; }
   .type-nickname{ font-size:19px; font-weight:800; line-height:1.35; margin:0 0 6px; text-wrap:balance; word-break:keep-all; }
-  .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.06em; color:var(--ink-soft); }
   .type-tagline{ font-size:13.5px; font-weight:500; color:var(--ink-soft); line-height:1.6; text-align:center; margin:10px 0 0; text-wrap:balance; word-break:keep-all; }
   .result-detail{ padding:16px 22px 0; }
   .result-detail-text{ font-size:13px; color:var(--ink-soft); line-height:1.7; text-align:center; margin:0; }
@@ -657,7 +656,6 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid){
         <div class="type-name-block">
           <h2 class="type-name display" style="color:${P.colorHex};">${P.name}</h2>
           <p class="type-nickname" style="color:${P.colorHex};">${P.nickname}</p>
-          <div class="type-sub mono" style="letter-spacing:0.06em;">${P.sub}</div>
           <p class="type-tagline">&ldquo;${P.tagline}&rdquo;</p>
           <div class="tag-row">
             ${(P.tags || []).map(t=>`<span class="persona-tag" style="background:${P.colorHex}1A; color:${P.colorHex};">#${t}</span>`).join('')}
