@@ -402,6 +402,8 @@ function findBestMatch(list, eventType, region, persona){
 /* ---------------------------------------------------------
    2. STATE
 --------------------------------------------------------- */
+const STAFF_MODE = new URLSearchParams(location.search).get('staff') === '1';
+
 let screen = 'entry';        // 'entry' | 'quiz' | 'result' | 'admin' | 'matchType' | 'matchRegion' | 'matchResult' | 'matchInvite'
 let entryTab = 'guest';      // 'guest' | 'admin'
 let guestName = '';
@@ -466,10 +468,12 @@ function renderEntry(){
         <span class="tag">THE FARM : Plug-IN</span>
       </div>
       <div class="card-inner">
+        ${STAFF_MODE ? `
         <div class="entry-tabs">
           <button class="entry-tab ${entryTab==='guest'?'active':''}" onclick="switchEntryTab('guest')">게스트</button>
           <button class="entry-tab ${entryTab==='admin'?'active':''}" onclick="switchEntryTab('admin')">관리자</button>
         </div>
+        ` : ''}
         ${entryTab==='guest' ? guestPanelHTML() : adminPanelHTML()}
       </div>
       <div class="divider"></div>
