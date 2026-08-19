@@ -197,11 +197,11 @@
   .match-option-name{ font-size:14.5px; font-weight:700; margin-bottom:3px; }
   .match-option-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; }
 
-  .match-result-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 22px; }
+  .match-result-grid{ display:flex; flex-direction:column; gap:12px; margin:18px 0 22px; }
   .match-result-block{ background:#1D1911; border:1px solid var(--line); border-radius:12px; padding:14px 15px; }
   .match-result-label{ font-size:10px; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:8px; }
-  .match-result-name{ font-size:14px; font-weight:700; margin-bottom:4px; }
-  .match-result-sub{ font-size:11.5px; color:var(--ink-soft); line-height:1.55; }
+  .match-result-name{ font-size:14px; font-weight:700; margin-bottom:4px; word-break:keep-all; }
+  .match-result-sub{ font-size:11.5px; color:var(--ink-soft); line-height:1.55; word-break:keep-all; }
   .decision-q{ text-align:center; font-size:15px; font-weight:700; margin:6px 0 4px; }
 
   /* ---------- admin dashboard ---------- */
@@ -242,7 +242,6 @@
     h2.type-name{ font-size:27px; }
     .type-nickname{ font-size:16px; }
     .admin-shell{ padding:18px 16px 20px; }
-    .match-result-grid{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -348,15 +347,44 @@ const MENTORS = AXIS_ORDER.map(k => ({
   regions: REGION_ORDER.slice(),
   personas: [k],
 }));
-const PROJECTS = AXIS_ORDER.map(k => ({
-  id: `project_${k}`,
-  name: '[프로젝트명 — 준비 중]',
-  period: '[기간 — 준비 중]',
-  desc: '[프로젝트 소개 — 준비 중]',
-  eventTypes: EVENT_TYPE_ORDER.slice(),
-  regions: REGION_ORDER.slice(),
-  personas: [k],
-}));
+function mkProject(id, eventType, region, name, country){
+  return { id, eventTypes:[eventType], regions:[region], personas: AXIS_ORDER.slice(), name, country: country || '' };
+}
+const PROJECTS = [
+  // B2B
+  mkProject('proj_b2b_01', 'b2b', 'namerica', '찾아가는 해외 B2B 도서전 개최 대행 용역', '미국'),
+  mkProject('proj_b2b_02', 'b2b', 'namerica', '콘텐츠 스타트업 해외마켓 참가지원 및 운영', '미국'),
+  mkProject('proj_b2b_03', 'b2b', 'samerica', '상반기 ICT비즈니스파트너십 운영', '멕시코, 콜롬비아, 칠레, 브라질'),
+  mkProject('proj_b2b_04', 'b2b', 'europe', '2026 밉런던 쇼케이스 운영', '영국'),
+  mkProject('proj_b2b_05', 'b2b', 'europe', '해외 방송마켓 한국공동관 및 쇼케이스 운영', '프랑스'),
+  mkProject('proj_b2b_06', 'b2b', 'europe', '찾아가는 해외 B2B 도서전 개최 대행 용역', '이탈리아'),
+  mkProject('proj_b2b_07', 'b2b', 'europe', '콘텐츠 스타트업 해외마켓 참가지원 및 운영', '프랑스'),
+  mkProject('proj_b2b_08', 'b2b', 'europe', 'MWC 2026 서울통합관 조성 및 운영', '스페인'),
+  mkProject('proj_b2b_09', 'b2b', 'asia', '찾아가는 해외 B2B 도서전 개최 대행', '베트남, 태국'),
+  mkProject('proj_b2b_10', 'b2b', 'asia', '상반기 ICT비즈니스파트너십 운영용역', '싱가포르, 베트남'),
+  mkProject('proj_b2b_11', 'b2b', 'asia', '해외 IR 및 비즈니스 상담회 운영', ''),
+  mkProject('proj_b2b_12', 'b2b', 'asia', '콘텐츠 스타트업 해외마켓 참가지원 및 운영', '싱가포르'),
+  mkProject('proj_b2b_13', 'b2b', 'middleeast', '찾아가는 해외 B2B 도서전 개최 대행', 'UAE'),
+  mkProject('proj_b2b_14', 'b2b', 'middleeast', '하반기 ICT비즈니스파트너십 운영', '카타르, 사우디아라비아, 오만'),
+  mkProject('proj_b2b_15', 'b2b', 'middleeast', '중동 디지털 혁신기업 파트너십 운영', 'UAE'),
+  // B2G
+  mkProject('proj_b2g_01', 'b2g', 'namerica', '콘텐츠 해외 투자유치 지원 프로그램 U-KNOCK 2026 in USA', '미국'),
+  mkProject('proj_b2g_02', 'b2g', 'namerica', 'SaaS 글로벌전시회 기업공동관 운영', '미국'),
+  mkProject('proj_b2g_03', 'b2g', 'europe', '한국무형문화재 주간 프랑스 파리 유네스코 본부 전시', '프랑스'),
+  mkProject('proj_b2g_04', 'b2g', 'asia', '한-일 수교 60주년 출판 교류 사업', '일본'),
+  mkProject('proj_b2g_05', 'b2g', 'asia', '한-아세안 네트워킹 상담회 인프라 구축', '인도네시아'),
+  mkProject('proj_b2g_06', 'b2g', 'asia', 'APEC 2025 재무·구조개혁 장관회의', ''),
+  mkProject('proj_b2g_07', 'b2g', 'middleeast', '한-UAE AI인프라·반도체 투자협력포럼', 'UAE'),
+  mkProject('proj_b2g_08', 'b2g', 'middleeast', 'GITEX 민·관합동 수출개척단 운영', 'UAE'),
+  // B2C
+  mkProject('proj_b2c_01', 'b2c', 'namerica', '몬트리올도서전 웹소설 작가 홍보지원', ''),
+  mkProject('proj_b2c_02', 'b2c', 'europe', '출판한류 K-북 해외 통합 프로모션 운영', '프랑스'),
+  mkProject('proj_b2c_03', 'b2c', 'europe', '프랑스 K-박람회 웹소설 작가 해외홍보지원', '프랑스'),
+  mkProject('proj_b2c_04', 'b2c', 'asia', '아시아 어린이 콘텐츠 축제(AFCC) 주빈국관 운영', '싱가포르'),
+  mkProject('proj_b2c_05', 'b2c', 'asia', '해외 방송마켓 한국공동관 및 쇼케이스 운영', '일본'),
+  mkProject('proj_b2c_06', 'b2c', 'asia', 'OTT 글로벌 유통 활성화', '일본'),
+  mkProject('proj_b2c_07', 'b2c', 'asia', '독자 AI 파운데이션 모델 프로젝트 1차 대국민 보고회 운영', ''),
+];
 
 function findBestMatch(list, eventType, region, persona){
   let best = null, bestScore = -1;
@@ -907,8 +935,7 @@ function renderMatchResult(){
           <div class="match-result-block">
             <div class="match-result-label mono">PROJECT</div>
             <div class="match-result-name">${escapeHtml(project.name)}</div>
-            <div class="match-result-sub">${escapeHtml(project.period)}</div>
-            <div class="match-result-sub">${escapeHtml(project.desc)}</div>
+            ${project.country ? `<div class="match-result-sub">${escapeHtml(project.country)}</div>` : ''}
           </div>
         </div>
         <p class="decision-q">우리와 Plug-in 하시겠습니까?</p>
