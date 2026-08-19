@@ -151,13 +151,6 @@
   .persona-tag{ font-family:'Pretendard',sans-serif; font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px; }
   .radar-wrap{ display:flex; justify-content:center; padding:10px 0 4px; }
 
-  .clearance h3{ font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
-  .axis-row{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
-  .axis-name{ width:74px; flex-shrink:0; font-size:11.5px; font-weight:700; }
-  .axis-track{ flex:1; height:8px; background:var(--paper); border:1px solid var(--line); border-radius:100px; overflow:hidden; }
-  .axis-fill{ height:100%; border-radius:100px; }
-  .axis-score{ width:30px; text-align:right; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); flex-shrink:0; }
-
   .cta-row{ display:flex; flex-wrap:wrap; gap:9px; padding:20px 24px 24px; }
   .cta-row button{
     flex:1; min-width:120px; border-radius:13px; padding:13px; font-family:'Pretendard',sans-serif;
@@ -746,19 +739,6 @@ function resultCardHTML(name, pct, primary){
         </div>
 
         <div class="radar-wrap">${buildRadarSVG(pct, P.colorHex)}</div>
-
-        <div class="clearance">
-          <h3 class="mono">PERSONA STATS</h3>
-          ${AXIS_ORDER.map(k=>{
-            const p = PERSONAS[k];
-            const v = Math.max(pct[k],0);
-            return `<div class="axis-row">
-              <div class="axis-name">${AXIS_LABEL[k]}</div>
-              <div class="axis-track"><div class="axis-fill" style="width:${v}%; background:${p.colorHex};"></div></div>
-              <div class="axis-score mono">${v}</div>
-            </div>`;
-          }).join('')}
-        </div>
       </div>
     </div>
   `;
