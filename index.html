@@ -315,11 +315,13 @@ const EVENT_TYPES = {
   b2c: { key:'b2c', code:'B2C', name:'일반 대중 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#4CBE84' },
 };
 
-const REGION_ORDER = ['asia','europe','namerica'];
+const REGION_ORDER = ['asia','middleeast','europe','namerica','samerica'];
 const REGIONS = {
-  asia:     { key:'asia',     code:'ASIA',       name:'아시아',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E3A83D' },
-  europe:   { key:'europe',   code:'EUROPE',     name:'유럽',       cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#3FA6C4' },
-  namerica: { key:'namerica', code:'N.AMERICA',  name:'북아메리카', cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#4CBE84' },
+  asia:       { key:'asia',       code:'ASIA',       name:'동북·동남아시아', cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E3A83D' },
+  middleeast: { key:'middleeast', code:'MIDEAST',    name:'중동',           cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E2604A' },
+  europe:     { key:'europe',     code:'EUROPE',     name:'유럽',           cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#3FA6C4' },
+  namerica:   { key:'namerica',   code:'N.AMERICA',  name:'북아메리카',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#4CBE84' },
+  samerica:   { key:'samerica',   code:'S.AMERICA',  name:'남아메리카',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#9B6FE0' },
 };
 
 // 각 항목의 eventTypes/regions/personas 배열을 채워두면 매칭 시 가중치로 사용됩니다.
