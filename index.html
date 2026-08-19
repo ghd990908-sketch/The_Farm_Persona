@@ -1130,8 +1130,8 @@ function renderAdminDashboard(){
           <div class="admin-sub mono">${adminTab==='results' ? '전체 응시자 결과' : '멘토 매칭 응답'}</div>
         </div>
         <div class="admin-actions">
-          <button class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
-          <button class="admin-btn ghost" onclick="toggleDeleteMode()" ${(!activeList || !activeList.length)?'disabled':''}>${adminDeleteMode ? '선택 취소' : '삭제'}</button>
+          <button id="exportCsvBtn" class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
+          <button id="deleteToggleBtn" class="admin-btn ghost" onclick="toggleDeleteMode()" ${(!activeList || !activeList.length)?'disabled':''}>${adminDeleteMode ? '선택 취소' : '삭제'}</button>
           <button class="admin-btn" onclick="handleAdminLogout()">로그아웃</button>
         </div>
       </div>
@@ -1291,8 +1291,11 @@ async function loadAdminResults(){
 function refreshAdminBody(){
   const body = document.getElementById('adminBody');
   if(body) body.innerHTML = adminTab==='results' ? adminResultsBodyHTML() : adminMatchesBodyHTML();
-  const exportBtn = document.querySelector('.admin-btn.ghost');
+  const activeList = adminTab==='results' ? adminResults : adminMatches;
+  const exportBtn = document.getElementById('exportCsvBtn');
   if(exportBtn) exportBtn.disabled = !(adminTab==='results' && adminResults && adminResults.length);
+  const deleteToggleBtn = document.getElementById('deleteToggleBtn');
+  if(deleteToggleBtn) deleteToggleBtn.disabled = !(activeList && activeList.length);
 }
 
 function handleAdminLogout(){
