@@ -197,6 +197,7 @@
   .match-option-body{ min-width:0; }
   .match-option-name{ font-size:14.5px; font-weight:700; margin-bottom:3px; }
   .match-option-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; }
+  .match-option-tags{ font-size:10px; color:var(--accent); letter-spacing:0.02em; margin-top:5px; }
 
   .match-result-grid{ display:flex; flex-direction:column; gap:12px; margin:18px 0 22px; }
   .match-result-block{ background:#1D1911; border:1px solid var(--line); border-radius:12px; padding:14px 15px; }
@@ -204,6 +205,10 @@
   .match-result-name{ font-size:14px; font-weight:700; margin-bottom:4px; word-break:keep-all; }
   .match-result-sub{ font-size:11.5px; color:var(--ink-soft); line-height:1.55; word-break:keep-all; }
   .decision-q{ text-align:center; font-size:15px; font-weight:700; margin:6px 0 4px; }
+  .invite-row{ display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; border-bottom:1px solid var(--line); }
+  .invite-row:last-child{ border-bottom:none; }
+  .invite-label{ font-size:9.5px; letter-spacing:0.08em; color:var(--ink-soft); }
+  .invite-value{ font-size:13px; font-weight:700; text-align:right; }
 
   /* ---------- admin dashboard ---------- */
   .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(227,168,61,0.05); padding:22px 22px 26px; }
@@ -322,10 +327,38 @@ const QUESTIONS = [
    실제 사진·설명·멘토/프로젝트 데이터가 도착하면 아래 4개 객체만 교체하면 됩니다.
 --------------------------------------------------------- */
 const EVENT_TYPE_ORDER = ['b2b','b2g','b2c'];
+// code = 내부/관리자용 분류값(DB, 관리자 테이블에서만 사용). label/desc/tags = 게스트 화면에 보이는 사용자 언어.
 const EVENT_TYPES = {
-  b2b: { key:'b2b', code:'B2B', name:'기업 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#E3A83D' },
-  b2g: { key:'b2g', code:'B2G', name:'정부·기관 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#3FA6C4' },
-  b2c: { key:'b2c', code:'B2C', name:'일반 대중 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#4CBE84' },
+  b2b: { key:'b2b', code:'B2B', badge:'BIZ', label:'BUSINESS', desc:'기업과 기업을 연결해 새로운 비즈니스 기회를 만드는 프로젝트', tags:['Buyer','Partnership','Export'], colorHex:'#E3A83D' },
+  b2g: { key:'b2g', code:'B2G', badge:'PI',  label:'PUBLIC IMPACT', desc:'정부·기관과 함께 산업과 시장의 변화를 만드는 프로젝트', tags:['Global Program','Policy','Industry'], colorHex:'#3FA6C4' },
+  b2c: { key:'b2c', code:'B2C', badge:'EXP', label:'EXPERIENCE', desc:'사람들이 직접 보고, 즐기고, 참여하게 만드는 프로젝트', tags:['Culture','Festival','Pop-up'], colorHex:'#4CBE84' },
+};
+
+// 매칭 결과 화면(YOUR NEXT PLUG-IN)용 문구 템플릿.
+// ROLE/MENTOR는 아직 프로젝트별·실제 멘토별 데이터가 없어서, 필드(BUSINESS/PUBLIC IMPACT/EXPERIENCE) 단위로만 일반화했습니다.
+const PERSONA_WHY = {
+  explorer: '당신은 낯선 환경에서도 빠르게 적응하고 관계를 만들어가는 Global Explorer입니다.',
+  builder:  '당신은 흩어진 정보를 정리해 결과물로 완성하는 Project Builder입니다.',
+  operator: '당신은 현장에서 빠르게 판단하고 사람을 움직이는 Field Operator입니다.',
+  thinker:  '당신은 틀에 갇히지 않고 새로운 접근을 찾아내는 Concept Architect입니다.',
+};
+const FIELD_WHY = {
+  b2b: '새로운 비즈니스 기회를 만드는',
+  b2g: '산업과 시장의 변화를 만드는',
+  b2c: '문화와 사람을 연결하는',
+};
+function whyYouText(persona, eventType, regionName){
+  return `${PERSONA_WHY[persona]} ${FIELD_WHY[eventType]} ${regionName} 프로젝트에서 그 강점이 가장 빛날 수 있습니다.`;
+}
+const FIELD_ROLE = {
+  b2b: { title:'Global Business Coordinator', sub:'Partnership Development / Deal Support' },
+  b2g: { title:'Global Program Coordinator', sub:'Policy & Industry Liaison' },
+  b2c: { title:'Global Event Operator', sub:'Participant Experience / On-site Coordination' },
+};
+const FIELD_MENTOR = {
+  b2b: '글로벌 비즈니스 파트너십을 실제로 성사시킨 PM',
+  b2g: '정부·기관 협력 프로젝트를 이끈 PM',
+  b2c: '글로벌 콘텐츠 프로젝트를 실제로 운영한 PM',
 };
 
 const REGION_ORDER = ['asia','middleeast','europe','namerica','samerica'];
@@ -854,13 +887,14 @@ function selectRegion(key){
   render();
 }
 
-function matchOptionCardHTML(code, colorHex, name, desc, onclickFn){
+function matchOptionCardHTML(badge, colorHex, name, desc, onclickFn, tags){
   return `
     <div class="match-option-card" onclick="${onclickFn}">
-      <div class="match-photo" style="background:${colorHex}22; color:${colorHex};">${code}</div>
+      <div class="match-photo" style="background:${colorHex}22; color:${colorHex};">${badge}</div>
       <div class="match-option-body">
         <div class="match-option-name">${escapeHtml(name)}</div>
         <div class="match-option-desc">${escapeHtml(desc)}</div>
+        ${tags && tags.length ? `<div class="match-option-tags">${tags.map(t=>escapeHtml(t)).join(' · ')}</div>` : ''}
       </div>
     </div>
   `;
@@ -875,11 +909,11 @@ function renderMatchType(){
       </div>
       <div class="card-inner">
         <div class="q-eyebrow mono">EVENT TYPE</div>
-        <h1 class="title display" style="font-size:22px; margin-bottom:18px;">관심 있는 행사 유형을<br>선택해주세요</h1>
+        <h1 class="title display" style="font-size:22px; margin-bottom:18px;">어떤 프로젝트에<br>가장 끌리시나요?</h1>
         <div class="match-option-list">
           ${EVENT_TYPE_ORDER.map(k=>{
             const e = EVENT_TYPES[k];
-            return matchOptionCardHTML(e.code, e.colorHex, e.name, e.desc, `selectEventType('${e.key}')`);
+            return matchOptionCardHTML(e.badge, e.colorHex, e.label, e.desc, `selectEventType('${e.key}')`, e.tags);
           }).join('')}
         </div>
       </div>
@@ -919,32 +953,38 @@ function renderMatchRegion(){
 function renderMatchResult(){
   const eventT = EVENT_TYPES[matchEventType];
   const region = REGIONS[matchRegion];
-  const mentor = matchMentor;
   const project = matchProject;
+  const primary = render_result_data.primary;
+  const role = FIELD_ROLE[matchEventType];
+  const mentorText = FIELD_MENTOR[matchEventType];
 
   stage.innerHTML = `
     <div class="card">
       <div class="card-topline">
         <span class="tag">THE FARM : Plug-IN</span>
-        <span class="tag">MATCH · RESULT</span>
+        <span class="tag">YOUR NEXT PLUG-IN</span>
       </div>
       <div class="card-inner">
-        <div class="q-eyebrow mono">${eventT.code} · ${region.name}</div>
-        <h1 class="title display" style="font-size:22px;">당신에게 맞는<br>멘토와 프로젝트</h1>
+        <div class="q-eyebrow mono">${eventT.label} · ${region.name}</div>
+        <h1 class="title display" style="font-size:21px; word-break:keep-all;">${escapeHtml(project.name)}</h1>
+        <p class="lede" style="margin:10px 0 20px;">${whyYouText(primary, matchEventType, region.name)}</p>
+
         <div class="match-result-grid">
           <div class="match-result-block">
-            <div class="match-result-label mono">MENTOR</div>
-            <div class="match-result-name">${escapeHtml(mentor.name)}</div>
-            <div class="match-result-sub">${escapeHtml(mentor.org)}</div>
-            <div class="match-result-sub">${escapeHtml(mentor.intro)}</div>
+            <div class="match-result-label mono">YOUR ROLE</div>
+            <div class="match-result-name">${escapeHtml(role.title)}</div>
+            <div class="match-result-sub">${escapeHtml(role.sub)}</div>
           </div>
           <div class="match-result-block">
-            <div class="match-result-label mono">PROJECT</div>
-            <div class="match-result-name">${escapeHtml(project.name)}</div>
-            ${project.country ? `<div class="match-result-sub">${escapeHtml(project.country)}</div>` : ''}
+            <div class="match-result-label mono">YOUR MENTOR</div>
+            <div class="match-result-sub">${escapeHtml(mentorText)}</div>
+          </div>
+          <div class="match-result-block">
+            <div class="match-result-label mono">AT THE FARM</div>
+            <div class="match-result-sub">실제 프로젝트 사례를 보고, 멘토와 함께 15분 Micro Project를 경험합니다.</div>
           </div>
         </div>
-        <p class="decision-q">우리와 Plug-in 하시겠습니까?</p>
+        <p class="decision-q">당신의 다음 프로젝트에<br>Plug-in 하시겠습니까?</p>
       </div>
       <div class="cta-row">
         <button class="share full" onclick="handleMatchDecision(true)" ${matchDecisionLoading?'disabled':''}>${matchDecisionLoading?'처리 중...':'예, Plug-in 할게요'}</button>
@@ -987,24 +1027,64 @@ async function handleMatchDecision(isYes){
 function renderMatchInvite(){
   const eventT = EVENT_TYPES[matchEventType];
   const region = REGIONS[matchRegion];
+  const P = PERSONAS[render_result_data.primary];
   stage.innerHTML = `
     <div class="card">
       <div class="card-topline">
         <span class="tag">THE FARM : Plug-IN</span>
-        <span class="tag">INVITATION</span>
+        <span class="tag">PLUGGED IN</span>
       </div>
       <div class="card-inner" style="text-align:center; padding-top:32px; padding-bottom:8px;">
-        <div class="mono" style="font-size:11px; letter-spacing:0.14em; color:var(--accent);">OFFICIAL INVITATION</div>
-        <h1 class="title display" style="margin-top:14px;">${escapeHtml(guestName || 'GUEST')}님,<br>Plug-in을 환영합니다</h1>
-        <p class="lede" style="text-align:center;">${escapeHtml(eventT.name)} · ${escapeHtml(region.name)}<br>${escapeHtml(matchMentor.name)} 멘토 · ${escapeHtml(matchProject.name)} 프로젝트와 함께합니다.</p>
-        <div class="divider" style="margin:20px 0 18px;"></div>
-        <p style="font-size:12.5px; color:var(--ink-soft); margin:0;">담당자가 확인 후 별도로 연락드릴 예정입니다.</p>
+        <div class="mono" style="font-size:11px; letter-spacing:0.14em; color:var(--accent);">YOU'RE PLUGGED IN.</div>
+        <h1 class="title display" style="margin-top:14px; word-break:keep-all;">${escapeHtml(guestName || 'GUEST')}님, THE FARM에서<br>당신의 다음 프로젝트를 만나보세요.</h1>
+
+        <div class="match-result-block" style="text-align:left; margin:20px 0;">
+          <div class="invite-row"><span class="invite-label mono">YOUR PERSONA</span><span class="invite-value">${escapeHtml(P.name)}</span></div>
+          <div class="invite-row"><span class="invite-label mono">YOUR FIELD</span><span class="invite-value">${escapeHtml(eventT.label)}</span></div>
+          <div class="invite-row"><span class="invite-label mono">YOUR REGION</span><span class="invite-value">${escapeHtml(region.name)}</span></div>
+        </div>
+
+        <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">현장에서 당신에게 추천된 프로젝트와 멘토를 직접 만나게 됩니다.</p>
       </div>
       <div class="cta-row">
-        <button class="restart full" onclick="restart()">처음으로</button>
+        <button class="share full" id="saveInviteBtn" onclick="saveInviteImage()">내 Invitation 저장하기</button>
+        <button class="restart full" onclick="shareInvite()">친구에게 Persona Test 보내기</button>
       </div>
     </div>
   `;
+}
+
+async function saveInviteImage(){
+  const btn = document.getElementById('saveInviteBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const canvas = await captureResultCanvas();
+    if(!canvas){ alert('이미지 저장 기능을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.'); return; }
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `THE_FARM_Invitation_${(guestName || 'guest').replace(/[^\w가-힣]/g, '')}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function shareInvite(){
+  const shareData = {
+    title: 'THE FARM Persona Test',
+    text: '나에게 맞는 글로벌 프로젝트를 찾아보세요 — THE FARM Persona Test',
+    url: location.origin + location.pathname
+  };
+  try{
+    if(navigator.share){
+      await navigator.share(shareData);
+    }else{
+      await navigator.clipboard.writeText(shareData.url);
+      alert('링크가 복사되었습니다. 친구에게 붙여넣기 해주세요!');
+    }
+  }catch(e){ /* 공유 취소 등은 조용히 무시 */ }
 }
 
 function waitForImages(container){
