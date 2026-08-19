@@ -20,15 +20,15 @@ module.exports = async function handler(req, res) {
       body = {};
     }
   }
-  const { id } = body || {};
+  const { ids } = body || {};
 
-  if (!id || typeof id !== 'string') {
-    res.status(400).json({ ok: false, error: 'id required' });
+  if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => typeof id === 'string')) {
+    res.status(400).json({ ok: false, error: 'ids required' });
     return;
   }
 
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { error } = await supabase.from('results').delete().eq('id', id);
+  const { error } = await supabase.from('results').delete().in('id', ids);
 
   if (error) {
     res.status(500).json({ ok: false, error: error.message });

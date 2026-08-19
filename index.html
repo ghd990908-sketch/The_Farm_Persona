@@ -222,8 +222,8 @@
   }
   .admin-row-btn:hover{ border-color:var(--accent); color:var(--accent); }
   .admin-row-btn:disabled{ opacity:0.5; cursor:default; }
-  .admin-row-btn.danger{ border-color:var(--operator); color:var(--operator); margin-left:6px; }
-  .admin-row-btn.danger:hover{ background:var(--operator); border-color:var(--operator); color:#fff; }
+  .admin-btn.danger{ border-color:var(--operator); background:var(--operator); color:#fff; }
+  .row-check{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
   .admin-empty{ padding:44px 0; text-align:center; color:var(--ink-soft); font-family:'Pretendard',sans-serif; font-size:12.5px; }
   .admin-table-wrap{ overflow-x:auto; }
   .admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -386,6 +386,8 @@ let adminLoading = false;
 let adminTab = 'results';    // 'results' | 'matches'
 let adminResults = null;
 let adminResultsError = '';
+let adminDeleteMode = false;
+let adminSelectedIds = new Set();
 let adminMatches = null;
 let adminMatchesError = '';
 
@@ -1069,23 +1071,43 @@ async function downloadRowImage(i, btn){
   }
 }
 
-async function deleteResultRow(id, btn){
-  if(!confirm('이 결과를 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
-  const prevText = btn ? btn.textContent : '';
+function toggleDeleteMode(){
+  adminDeleteMode = !adminDeleteMode;
+  adminSelectedIds = new Set();
+  render();
+}
+
+function toggleSelectRow(id, checked){
+  if(checked) adminSelectedIds.add(id); else adminSelectedIds.delete(id);
+  refreshAdminBody();
+}
+
+function toggleSelectAll(checked){
+  adminSelectedIds = checked ? new Set(adminResults.map(r=>r.id)) : new Set();
+  refreshAdminBody();
+}
+
+async function deleteSelectedResults(){
+  const ids = Array.from(adminSelectedIds);
+  if(ids.length===0) return;
+  if(!confirm(`선택한 ${ids.length}건을 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+  const btn = document.getElementById('bulkDeleteBtn');
   if(btn){ btn.disabled = true; btn.textContent = '삭제 중...'; }
   try{
-    const res = await fetch('/api/admin-delete-result', {
+    const res = await fetch('/api/admin-delete-results', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ ids })
     });
     const data = await res.json().catch(()=>({}));
     if(!res.ok || !data.ok) throw new Error(data.error || '삭제 실패');
-    adminResults = adminResults.filter(r => r.id !== id);
-    refreshAdminBody();
+    adminResults = adminResults.filter(r => !adminSelectedIds.has(r.id));
+    adminSelectedIds = new Set();
+    adminDeleteMode = false;
+    render();
   }catch(e){
     alert('삭제에 실패했어요. 다시 시도해주세요.');
-    if(btn){ btn.disabled = false; btn.textContent = prevText; }
+    if(btn){ btn.disabled = false; btn.textContent = `선택 삭제 (${ids.length})`; }
   }
 }
 
@@ -1102,6 +1124,7 @@ function renderAdminDashboard(){
         </div>
         <div class="admin-actions">
           <button class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
+          ${adminTab==='results' ? `<button class="admin-btn ghost" onclick="toggleDeleteMode()" ${(!adminResults || !adminResults.length)?'disabled':''}>${adminDeleteMode ? '선택 취소' : '삭제'}</button>` : ''}
           <button class="admin-btn" onclick="handleAdminLogout()">로그아웃</button>
         </div>
       </div>
@@ -1116,6 +1139,8 @@ function renderAdminDashboard(){
 
 function switchAdminTab(tab){
   adminTab = tab;
+  adminDeleteMode = false;
+  adminSelectedIds = new Set();
   render();
   if(tab==='matches' && adminMatches===null) loadAdminMatches();
   if(tab==='results' && adminResults===null) loadAdminResults();
@@ -1188,13 +1213,22 @@ function adminResultsBodyHTML(){
   if(adminResults.length===0){
     return `<div class="admin-empty">아직 제출된 응답이 없습니다.</div>`;
   }
+  const allSelected = adminResults.length>0 && adminResults.every(r=>adminSelectedIds.has(r.id));
+  const bulkBar = adminDeleteMode ? `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span class="mono" style="font-size:12px;color:var(--ink-soft);">${adminSelectedIds.size}개 선택됨</span>
+      <button id="bulkDeleteBtn" class="admin-btn danger" onclick="deleteSelectedResults()" ${adminSelectedIds.size===0?'disabled':''}>선택 삭제 (${adminSelectedIds.size})</button>
+    </div>
+  ` : '';
   return `
+    ${bulkBar}
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr>
+          ${adminDeleteMode ? `<th><input type="checkbox" class="row-check" onchange="toggleSelectAll(this.checked)" ${allSelected?'checked':''}></th>` : ''}
           <th>이름</th><th>주유형</th><th>부유형</th>
           ${AXIS_ORDER.map(k=>`<th>${AXIS_LABEL[k]}</th>`).join('')}
-          <th>완료시각</th><th>관리</th>
+          <th>완료시각</th>${adminDeleteMode ? '' : '<th>관리</th>'}
         </tr></thead>
         <tbody>
           ${adminResults.map((r,i)=>{
@@ -1202,15 +1236,13 @@ function adminResultsBodyHTML(){
             const primaryP = PERSONAS[r.primary_type];
             const secondaryP = PERSONAS[r.secondary_type];
             return `<tr>
+              ${adminDeleteMode ? `<td><input type="checkbox" class="row-check" onchange="toggleSelectRow('${r.id}', this.checked)" ${adminSelectedIds.has(r.id)?'checked':''}></td>` : ''}
               <td>${escapeHtml(r.name)}</td>
               <td>${escapeHtml(primaryP ? primaryP.name : r.primary_type)}</td>
               <td>${escapeHtml(secondaryP ? secondaryP.name : r.secondary_type)}</td>
               ${AXIS_ORDER.map(k=>`<td>${s[k] ?? '-'}</td>`).join('')}
               <td class="mono">${formatDate(r.submitted_at)}</td>
-              <td>
-                <button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button>
-                <button class="admin-row-btn danger" onclick="deleteResultRow('${r.id}', this)">삭제</button>
-              </td>
+              ${adminDeleteMode ? '' : `<td><button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button></td>`}
             </tr>`;
           }).join('')}
         </tbody>
@@ -1250,6 +1282,8 @@ function handleAdminLogout(){
   fetch('/api/admin-logout', { method:'POST' }).finally(()=>{
     adminResults = null;
     adminResultsError = '';
+    adminDeleteMode = false;
+    adminSelectedIds = new Set();
     adminMatches = null;
     adminMatchesError = '';
     adminTab = 'results';
