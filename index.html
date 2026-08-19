@@ -142,9 +142,9 @@
   }
   .persona-badge img{ width:100%; height:100%; object-fit:cover; display:block; }
   .type-name-block{ text-align:center; margin:6px 0 4px; }
-  h2.type-name{ font-size:33px; margin:2px 0 6px; }
-  .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.14em; color:var(--ink-soft); }
-  .type-tagline{ font-size:17px; font-weight:800; line-height:1.45; text-align:center; margin:12px 0 0; letter-spacing:-0.01em; text-wrap:balance; word-break:keep-all; }
+  h2.type-name{ font-size:29px; line-height:1.3; margin:2px 0 6px; text-wrap:balance; word-break:keep-all; }
+  .type-sub{ font-family:'Pretendard',sans-serif; font-size:11px; letter-spacing:0.06em; color:var(--ink-soft); }
+  .type-tagline{ font-size:13.5px; font-weight:500; color:var(--ink-soft); line-height:1.6; text-align:center; margin:10px 0 0; text-wrap:balance; word-break:keep-all; }
   .result-detail{ padding:16px 22px 0; }
   .result-detail-text{ font-size:13px; color:var(--ink-soft); line-height:1.7; text-align:center; margin:0; }
   .tag-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin:12px 0 0; }
@@ -206,7 +206,7 @@
     .stub, .nav-row, .cta-row{ padding-left:18px; padding-right:18px; }
     h1.title{ font-size:23px; }
     .q-text{ font-size:17px; min-height:88px; }
-    h2.type-name{ font-size:27px; }
+    h2.type-name{ font-size:24px; }
     .admin-shell{ padding:18px 16px 20px; }
   }
 </style>
@@ -221,6 +221,7 @@
 const PERSONAS = {
   explorer: {
     key:'explorer', code:'GE', name:'GLOBAL EXPLORER', sub:'적응형', tagEn:'GLOBAL ADAPTER', sym:'🧭', colorHex:'#3FA6C4',
+    nickname:'적응력 만렙 개척자',
     tagline:'낯선 환경에서도 빠르게 상황을 파악하고 관계를 만들어가는 타입.',
     desc:'새로운 장소와 사람, 익숙하지 않은 업무 환경에서도 비교적 빠르게 적응합니다. 해외 출장이나 처음 만나는 파트너와의 미팅처럼 변수가 많은 상황에서도 위축되기보다 상황을 파악하고 필요한 소통을 시작하는 편입니다. 완벽하게 익숙하지 않은 환경에서도 먼저 경험하며 배우기 때문에 해외 프로젝트, 현지 커뮤니케이션, 새로운 관계 형성이 필요한 업무에서 강점을 보입니다.',
     summary:'새로운 환경과 사람 앞에서도 위축되지 않고 먼저 상황을 파악합니다. 해외 프로젝트나 낯선 파트너와의 협업에서 강점을 보이는 타입입니다.',
@@ -229,6 +230,7 @@ const PERSONAS = {
   },
   builder: {
     key:'builder', code:'PB', name:'PROJECT BUILDER', sub:'구축형', tagEn:'TOOL BUILDER', sym:'🛠️', colorHex:'#4CBE84',
+    nickname:'결과로 증명하는 설계자',
     tagline:'흩어진 정보를 정리하고, 적합한 도구를 활용해 결과물로 만드는 타입.',
     desc:'복잡한 정보가 주어져도 핵심을 빠르게 정리하고 필요한 형태의 결과물로 만드는 데 강점이 있습니다. PPT, AI, 협업툴 등 새로운 도구도 필요하다면 빠르게 익혀 업무에 적용합니다. 단순히 툴을 많이 사용하는 사람이 아니라 정보를 찾고, 구조화하고, 실제 결과물로 완성하는 과정에 강한 유형입니다.',
     summary:'복잡한 정보도 핵심만 빠르게 정리해 결과물로 만들어냅니다. PPT, AI, 협업툴 등 새로운 도구를 익혀 실무에 바로 적용하는 타입입니다.',
@@ -237,6 +239,7 @@ const PERSONAS = {
   },
   operator: {
     key:'operator', code:'FO', name:'FIELD OPERATOR', sub:'실행형', tagEn:'FAST MOVER', sym:'⚡', colorHex:'#E2604A',
+    nickname:'현장을 지휘하는 행동가',
     tagline:'해야 할 일이 보이면 판단하고 바로 실행으로 옮기는 타입.',
     desc:'업무의 모든 조건이 완벽하게 정리될 때까지 기다리기보다, 현재 주어진 정보를 바탕으로 우선 필요한 행동을 시작합니다. 특히 행사 현장처럼 예상하지 못한 변수가 생기거나 역할이 명확하지 않은 순간에도 상황을 파악하고 먼저 움직입니다. 현장 운영, 즉각적인 대응, 빠른 실행이 필요한 업무에서 강점을 보입니다.',
     summary:'모든 게 정리되기를 기다리기보다 지금 할 수 있는 행동부터 시작합니다. 예상 밖의 변수가 생기는 현장에서도 먼저 움직이는 타입입니다.',
@@ -245,6 +248,7 @@ const PERSONAS = {
   },
   thinker: {
     key:'thinker', code:'CA', name:'CONCEPT ARCHITECT', sub:'발상형', tagEn:'IDEA GENERATOR', sym:'💡', colorHex:'#9B6FE0',
+    nickname:'틀을 깨는 탐험가',
     tagline:'주어진 답을 따르기보다 문제를 다시 보고 더 나은 방법을 찾는 타입.',
     desc:'기존 방식이 있더라도 그것이 최선인지 한 번 더 고민합니다. 문제가 생겼을 때 단순히 주어진 선택지 중 하나를 고르기보다 다른 접근법이나 새로운 대안을 만들어내는 편입니다. 아이디어 자체뿐 아니라 문제를 다른 관점에서 바라보고 해결 방향을 제안하는 능력이 강한 유형입니다.',
     summary:'기존 방식이 있어도 더 나은 방법이 없을지 한 번 더 고민합니다. 문제를 다른 관점에서 바라보고 새로운 대안을 제안하는 타입입니다.',
@@ -254,7 +258,7 @@ const PERSONAS = {
 };
 
 const AXIS_ORDER = ['explorer','builder','operator','thinker'];
-const AXIS_LABEL = { explorer:'글로벌 적응력', builder:'구조화력', operator:'실행력', thinker:'문제해결 발상력' };
+const AXIS_LABEL = { explorer:'글로벌 적응력', builder:'구조화 능력', operator:'실행력', thinker:'문제해결 발상력' };
 
 const QUESTIONS = [
   { id:1,  axis:'explorer', r:false, text:'처음 가는 장소나 익숙하지 않은 환경에서 적응이 빠른 편이다.' },
@@ -649,9 +653,9 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid){
         <div class="badge-wrap">${buildPersonaBadge(P.key, P.colorHex)}</div>
 
         <div class="type-name-block">
-          <h2 class="type-name display" style="color:${P.colorHex};">${P.name}</h2>
-          <div class="type-sub mono" style="letter-spacing:0.06em;">${P.sub}</div>
-          <p class="type-tagline" style="color:${P.colorHex};">&ldquo;${P.tagline}&rdquo;</p>
+          <h2 class="type-name display" style="color:${P.colorHex};">${P.nickname}</h2>
+          <div class="type-sub mono" style="letter-spacing:0.06em;">${P.name} · ${P.sub}</div>
+          <p class="type-tagline">&ldquo;${P.tagline}&rdquo;</p>
           <div class="tag-row">
             ${(P.tags || []).map(t=>`<span class="persona-tag" style="background:${P.colorHex}1A; color:${P.colorHex};">#${t}</span>`).join('')}
           </div>
