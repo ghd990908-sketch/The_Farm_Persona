@@ -109,6 +109,26 @@
   button.primary:disabled{ opacity:0.55; cursor:default; transform:none; }
   .meta-line{ text-align:center; font-family:'Pretendard',sans-serif; font-size:10.5px; color:var(--ink-soft); margin-top:12px; }
 
+  /* ---------- glowing CTA (멘토·프로젝트 매칭 유도) ---------- */
+  button.match-cta{ position:relative; overflow:hidden; animation:ctaGlow 2s ease-in-out infinite; }
+  button.match-cta::after{
+    content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform:skewX(-20deg); animation:ctaSheen 2.6s ease-in-out infinite;
+  }
+  @keyframes ctaGlow{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(227,168,61,0.5), 0 0 12px 1px rgba(227,168,61,0.3); }
+    50%{ box-shadow:0 0 0 5px rgba(227,168,61,0), 0 0 24px 7px rgba(227,168,61,0.65); }
+  }
+  @keyframes ctaSheen{
+    0%{ left:-60%; }
+    55%, 100%{ left:130%; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    button.match-cta{ animation:none; }
+    button.match-cta::after{ display:none; }
+  }
+
   /* ---------- quiz ---------- */
   .scan-top{ display:flex; justify-content:space-between; font-family:'Pretendard',sans-serif; font-size:10px; color:var(--ink-soft); margin:12px 0 2px; }
   .q-eyebrow{ font-family:'Pretendard',sans-serif; font-size:11px; color:var(--ink-soft); margin:22px 0 8px; }
@@ -757,7 +777,7 @@ function renderResult(){
 
   const matchCta = `
     <div style="padding:6px 24px 0;">
-      <button class="primary" onclick="startMatchFlow()">나에게 딱 맞는 멘토 · 해외 프로젝트 알아보기 →</button>
+      <button class="primary match-cta" onclick="startMatchFlow()">나에게 딱 맞는 멘토 · 해외 프로젝트 알아보기 →</button>
     </div>
   `;
 
