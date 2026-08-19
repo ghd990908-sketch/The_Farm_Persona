@@ -173,6 +173,28 @@
   .cta-row .share{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
   .cta-row .share-outline{ background:var(--card); border-color:var(--accent); color:var(--accent); }
 
+  /* ---------- plug-in match flow ---------- */
+  .match-option-list{ display:flex; flex-direction:column; gap:11px; }
+  .match-option-card{
+    display:flex; align-items:center; gap:14px; padding:12px; border:1.5px solid var(--line);
+    border-radius:14px; background:#1D1911; cursor:pointer; transition:all 0.14s ease;
+  }
+  .match-option-card:hover{ border-color:var(--accent); transform:translateY(-1px); }
+  .match-photo{
+    flex-shrink:0; width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-family:'Pretendard',sans-serif; font-weight:800; font-size:11.5px; letter-spacing:0.02em; text-align:center;
+  }
+  .match-option-body{ min-width:0; }
+  .match-option-name{ font-size:14.5px; font-weight:700; margin-bottom:3px; }
+  .match-option-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; }
+
+  .match-result-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 22px; }
+  .match-result-block{ background:#1D1911; border:1px solid var(--line); border-radius:12px; padding:14px 15px; }
+  .match-result-label{ font-size:10px; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:8px; }
+  .match-result-name{ font-size:14px; font-weight:700; margin-bottom:4px; }
+  .match-result-sub{ font-size:11.5px; color:var(--ink-soft); line-height:1.55; }
+  .decision-q{ text-align:center; font-size:15px; font-weight:700; margin:6px 0 4px; }
+
   /* ---------- admin dashboard ---------- */
   .admin-shell{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(227,168,61,0.05); padding:22px 22px 26px; }
   .admin-header{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--line); }
@@ -209,6 +231,7 @@
     h2.type-name{ font-size:27px; }
     .type-nickname{ font-size:16px; }
     .admin-shell{ padding:18px 16px 20px; }
+    .match-result-grid{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -284,9 +307,60 @@ const QUESTIONS = [
 ];
 
 /* ---------------------------------------------------------
+   1b. PLUG-IN MATCH DATA (행사유형 → 지역 → 멘토/프로젝트 매칭)
+   실제 사진·설명·멘토/프로젝트 데이터가 도착하면 아래 4개 객체만 교체하면 됩니다.
+--------------------------------------------------------- */
+const EVENT_TYPE_ORDER = ['b2b','b2g','b2c'];
+const EVENT_TYPES = {
+  b2b: { key:'b2b', code:'B2B', name:'기업 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#E3A83D' },
+  b2g: { key:'b2g', code:'B2G', name:'정부·기관 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#3FA6C4' },
+  b2c: { key:'b2c', code:'B2C', name:'일반 대중 대상 행사', desc:'[행사 소개 — 준비 중]', colorHex:'#4CBE84' },
+};
+
+const REGION_ORDER = ['asia','europe','namerica'];
+const REGIONS = {
+  asia:     { key:'asia',     code:'ASIA',       name:'아시아',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E3A83D' },
+  europe:   { key:'europe',   code:'EUROPE',     name:'유럽',       cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#3FA6C4' },
+  namerica: { key:'namerica', code:'N.AMERICA',  name:'북아메리카', cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#4CBE84' },
+};
+
+// 각 항목의 eventTypes/regions/personas 배열을 채워두면 매칭 시 가중치로 사용됩니다.
+// 지금은 페르소나 유형별 자리표시자만 있어서, 실제 데이터가 오기 전까지는 페르소나 기준으로만 매칭됩니다.
+const MENTORS = AXIS_ORDER.map(k => ({
+  id: `mentor_${k}`,
+  name: '[멘토 이름 — 준비 중]',
+  org: '[소속 — 준비 중]',
+  intro: '[한줄 소개 — 준비 중]',
+  eventTypes: EVENT_TYPE_ORDER.slice(),
+  regions: REGION_ORDER.slice(),
+  personas: [k],
+}));
+const PROJECTS = AXIS_ORDER.map(k => ({
+  id: `project_${k}`,
+  name: '[프로젝트명 — 준비 중]',
+  period: '[기간 — 준비 중]',
+  desc: '[프로젝트 소개 — 준비 중]',
+  eventTypes: EVENT_TYPE_ORDER.slice(),
+  regions: REGION_ORDER.slice(),
+  personas: [k],
+}));
+
+function findBestMatch(list, eventType, region, persona){
+  let best = null, bestScore = -1;
+  list.forEach(item=>{
+    let score = 0;
+    if(item.eventTypes.includes(eventType)) score++;
+    if(item.regions.includes(region)) score++;
+    if(item.personas.includes(persona)) score++;
+    if(score > bestScore){ bestScore = score; best = item; }
+  });
+  return best;
+}
+
+/* ---------------------------------------------------------
    2. STATE
 --------------------------------------------------------- */
-let screen = 'entry';        // 'entry' | 'quiz' | 'result' | 'admin'
+let screen = 'entry';        // 'entry' | 'quiz' | 'result' | 'admin' | 'matchType' | 'matchRegion' | 'matchResult' | 'matchInvite'
 let entryTab = 'guest';      // 'guest' | 'admin'
 let guestName = '';
 let guestPhone = '';
@@ -296,12 +370,21 @@ let entryLoading = false;
 let adminCode = '';
 let adminError = '';
 let adminLoading = false;
+let adminTab = 'results';    // 'results' | 'matches'
 let adminResults = null;
 let adminResultsError = '';
+let adminMatches = null;
+let adminMatchesError = '';
 
 let qIndex = 0;
 let answers = new Array(QUESTIONS.length).fill(null);
 let render_result_data = null;
+
+let matchEventType = null;
+let matchRegion = null;
+let matchMentor = null;
+let matchProject = null;
+let matchDecisionLoading = false;
 
 const stage = document.getElementById('stage');
 
@@ -310,6 +393,10 @@ function render(){
   if(screen==='entry') renderEntry();
   else if(screen==='quiz') renderQuiz();
   else if(screen==='admin') renderAdminDashboard();
+  else if(screen==='matchType') renderMatchType();
+  else if(screen==='matchRegion') renderMatchRegion();
+  else if(screen==='matchResult') renderMatchResult();
+  else if(screen==='matchInvite') renderMatchInvite();
   else renderResult();
 }
 
@@ -693,9 +780,16 @@ function renderResult(){
     </div>
   `;
 
+  const matchCta = `
+    <div style="padding:6px 24px 0;">
+      <button class="primary" onclick="startMatchFlow()">나에게 딱 맞는 멘토 · 해외 프로젝트 알아보기 →</button>
+    </div>
+  `;
+
   stage.innerHTML = `
     ${resultCardHTML(guestName, pct, primary, secondary, isHybrid)}
     <div class="result-detail"><p class="result-detail-text">${P.summary}</p></div>
+    ${matchCta}
     ${cta}
   `;
 
@@ -704,7 +798,187 @@ function renderResult(){
 
 function restart(){
   screen='entry'; entryTab='guest'; qIndex=0; guestName=''; guestPhone=''; entryError='';
-  answers = new Array(QUESTIONS.length).fill(null); render();
+  answers = new Array(QUESTIONS.length).fill(null);
+  matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
+  render();
+}
+
+/* ---------------------------------------------------------
+   8b. PLUG-IN MATCH FLOW (결과 → 행사유형 → 지역 → 매칭 → 초대)
+--------------------------------------------------------- */
+function startMatchFlow(){
+  matchEventType = null; matchRegion = null; matchMentor = null; matchProject = null; matchDecisionLoading = false;
+  screen = 'matchType';
+  render();
+}
+function backToResult(){ screen='result'; render(); }
+function backToMatchType(){ matchRegion=null; screen='matchType'; render(); }
+
+function selectEventType(key){ matchEventType = key; screen = 'matchRegion'; render(); }
+
+function selectRegion(key){
+  matchRegion = key;
+  const primary = render_result_data ? render_result_data.primary : null;
+  matchMentor = findBestMatch(MENTORS, matchEventType, matchRegion, primary);
+  matchProject = findBestMatch(PROJECTS, matchEventType, matchRegion, primary);
+  screen = 'matchResult';
+  render();
+}
+
+function matchOptionCardHTML(code, colorHex, name, desc, onclickFn){
+  return `
+    <div class="match-option-card" onclick="${onclickFn}">
+      <div class="match-photo" style="background:${colorHex}22; color:${colorHex};">${code}</div>
+      <div class="match-option-body">
+        <div class="match-option-name">${escapeHtml(name)}</div>
+        <div class="match-option-desc">${escapeHtml(desc)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatchType(){
+  stage.innerHTML = `
+    <div class="card">
+      <div class="card-topline">
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">MATCH · STEP 1</span>
+      </div>
+      <div class="card-inner">
+        <div class="q-eyebrow mono">EVENT TYPE</div>
+        <h1 class="title display" style="font-size:22px;">어떤 무대가<br>끌리시나요?</h1>
+        <p class="lede" style="margin-bottom:18px;">관심 있는 행사 유형을 선택해주세요.</p>
+        <div class="match-option-list">
+          ${EVENT_TYPE_ORDER.map(k=>{
+            const e = EVENT_TYPES[k];
+            return matchOptionCardHTML(e.code, e.colorHex, e.name, e.desc, `selectEventType('${e.key}')`);
+          }).join('')}
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="back-link mono" onclick="backToResult()">← 결과 화면으로</button>
+        <span></span>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatchRegion(){
+  stage.innerHTML = `
+    <div class="card">
+      <div class="card-topline">
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">MATCH · STEP 2</span>
+      </div>
+      <div class="card-inner">
+        <div class="q-eyebrow mono">REGION</div>
+        <h1 class="title display" style="font-size:22px;">어디로<br>향하고 싶으세요?</h1>
+        <p class="lede" style="margin-bottom:18px;">우리가 다녀온 지역 중 하나를 선택해주세요.</p>
+        <div class="match-option-list">
+          ${REGION_ORDER.map(k=>{
+            const r = REGIONS[k];
+            return matchOptionCardHTML(r.code, r.colorHex, r.name, r.cities, `selectRegion('${r.key}')`);
+          }).join('')}
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="back-link mono" onclick="backToMatchType()">← 이전으로</button>
+        <span></span>
+      </div>
+    </div>
+  `;
+}
+
+function renderMatchResult(){
+  const eventT = EVENT_TYPES[matchEventType];
+  const region = REGIONS[matchRegion];
+  const mentor = matchMentor;
+  const project = matchProject;
+
+  stage.innerHTML = `
+    <div class="card">
+      <div class="card-topline">
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">MATCH · RESULT</span>
+      </div>
+      <div class="card-inner">
+        <div class="q-eyebrow mono">${eventT.code} · ${region.name}</div>
+        <h1 class="title display" style="font-size:22px;">당신에게 맞는<br>멘토와 프로젝트</h1>
+        <div class="match-result-grid">
+          <div class="match-result-block">
+            <div class="match-result-label mono">MENTOR</div>
+            <div class="match-result-name">${escapeHtml(mentor.name)}</div>
+            <div class="match-result-sub">${escapeHtml(mentor.org)}</div>
+            <div class="match-result-sub">${escapeHtml(mentor.intro)}</div>
+          </div>
+          <div class="match-result-block">
+            <div class="match-result-label mono">PROJECT</div>
+            <div class="match-result-name">${escapeHtml(project.name)}</div>
+            <div class="match-result-sub">${escapeHtml(project.period)}</div>
+            <div class="match-result-sub">${escapeHtml(project.desc)}</div>
+          </div>
+        </div>
+        <p class="decision-q">우리와 Plug-in 하시겠습니까?</p>
+      </div>
+      <div class="cta-row">
+        <button class="share full" onclick="handleMatchDecision(true)" ${matchDecisionLoading?'disabled':''}>${matchDecisionLoading?'처리 중...':'예, Plug-in 할게요'}</button>
+        <button class="restart full" onclick="handleMatchDecision(false)" ${matchDecisionLoading?'disabled':''}>아니요, 결과로 돌아갈게요</button>
+      </div>
+    </div>
+  `;
+}
+
+async function handleMatchDecision(isYes){
+  if(!isYes){
+    screen = 'result';
+    render();
+    return;
+  }
+  matchDecisionLoading = true;
+  render();
+  try{
+    await fetch('/api/submit-match', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: guestName,
+        phoneLast4: guestPhone,
+        personaType: render_result_data.primary,
+        eventType: matchEventType,
+        region: matchRegion,
+        mentorId: matchMentor.id,
+        mentorName: matchMentor.name,
+        projectId: matchProject.id,
+        projectName: matchProject.name
+      })
+    });
+  }catch(e){ /* 화면 전환은 계속 진행, 전송 실패는 조용히 무시 */ }
+  matchDecisionLoading = false;
+  screen = 'matchInvite';
+  render();
+}
+
+function renderMatchInvite(){
+  const eventT = EVENT_TYPES[matchEventType];
+  const region = REGIONS[matchRegion];
+  stage.innerHTML = `
+    <div class="card">
+      <div class="card-topline">
+        <span class="tag">THE FARM : Plug-IN</span>
+        <span class="tag">INVITATION</span>
+      </div>
+      <div class="card-inner" style="text-align:center; padding-top:32px; padding-bottom:8px;">
+        <div class="mono" style="font-size:11px; letter-spacing:0.14em; color:var(--accent);">OFFICIAL INVITATION</div>
+        <h1 class="title display" style="margin-top:14px;">${escapeHtml(guestName || 'GUEST')}님,<br>Plug-in을 환영합니다</h1>
+        <p class="lede" style="text-align:center;">${escapeHtml(eventT.name)} · ${escapeHtml(region.name)}<br>${escapeHtml(matchMentor.name)} 멘토 · ${escapeHtml(matchProject.name)} 프로젝트와 함께합니다.</p>
+        <div class="divider" style="margin:20px 0 18px;"></div>
+        <p style="font-size:12.5px; color:var(--ink-soft); margin:0;">담당자가 확인 후 별도로 연락드릴 예정입니다.</p>
+      </div>
+      <div class="cta-row">
+        <button class="restart full" onclick="restart()">처음으로</button>
+      </div>
+    </div>
+  `;
 }
 
 function waitForImages(container){
@@ -813,16 +1087,84 @@ function renderAdminDashboard(){
       <div class="admin-header">
         <div>
           <div class="admin-title display">THE FARM 관리자 대시보드</div>
-          <div class="admin-sub mono">전체 응시자 결과</div>
+          <div class="admin-sub mono">${adminTab==='results' ? '전체 응시자 결과' : '멘토 매칭 응답'}</div>
         </div>
         <div class="admin-actions">
-          <button class="admin-btn ghost" onclick="exportCSV()" ${(!adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
+          <button class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
           <button class="admin-btn" onclick="handleAdminLogout()">로그아웃</button>
         </div>
       </div>
-      <div id="adminBody">${adminResultsBodyHTML()}</div>
+      <div class="entry-tabs" style="margin-bottom:16px;">
+        <button class="entry-tab ${adminTab==='results'?'active':''}" onclick="switchAdminTab('results')">응시 결과</button>
+        <button class="entry-tab ${adminTab==='matches'?'active':''}" onclick="switchAdminTab('matches')">매칭 응답</button>
+      </div>
+      <div id="adminBody">${adminTab==='results' ? adminResultsBodyHTML() : adminMatchesBodyHTML()}</div>
     </div>
   `;
+}
+
+function switchAdminTab(tab){
+  adminTab = tab;
+  render();
+  if(tab==='matches' && adminMatches===null) loadAdminMatches();
+  if(tab==='results' && adminResults===null) loadAdminResults();
+}
+
+function adminMatchesBodyHTML(){
+  if(adminMatchesError){
+    return `<div class="admin-empty">${escapeHtml(adminMatchesError)}</div>`;
+  }
+  if(!adminMatches){
+    return `<div class="admin-empty">불러오는 중...</div>`;
+  }
+  if(adminMatches.length===0){
+    return `<div class="admin-empty">아직 매칭 응답이 없습니다.</div>`;
+  }
+  return `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>이름</th><th>페르소나</th><th>행사유형</th><th>지역</th><th>멘토</th><th>프로젝트</th><th>응답시각</th>
+        </tr></thead>
+        <tbody>
+          ${adminMatches.map(m=>{
+            const p = PERSONAS[m.persona_type];
+            const e = EVENT_TYPES[m.event_type];
+            const r = REGIONS[m.region];
+            return `<tr>
+              <td>${escapeHtml(m.guest_name)}</td>
+              <td>${escapeHtml(p ? p.name : m.persona_type)}</td>
+              <td>${escapeHtml(e ? e.code : m.event_type)}</td>
+              <td>${escapeHtml(r ? r.name : m.region)}</td>
+              <td>${escapeHtml(m.mentor_name)}</td>
+              <td>${escapeHtml(m.project_name)}</td>
+              <td class="mono">${formatDate(m.created_at)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function loadAdminMatches(){
+  adminMatches = null;
+  adminMatchesError = '';
+  refreshAdminBody();
+  try{
+    const res = await fetch('/api/admin-matches');
+    if(res.status===401){
+      screen='entry'; entryTab='admin'; adminError='세션이 만료되었습니다. 다시 로그인해주세요.';
+      render();
+      return;
+    }
+    const data = await res.json();
+    if(!res.ok || !data.ok) throw new Error(data.error || '조회 실패');
+    adminMatches = data.matches;
+  }catch(e){
+    adminMatchesError = '결과를 불러오지 못했습니다. 새로고침해보세요.';
+  }
+  refreshAdminBody();
 }
 
 function adminResultsBodyHTML(){
@@ -886,15 +1228,18 @@ async function loadAdminResults(){
 
 function refreshAdminBody(){
   const body = document.getElementById('adminBody');
-  if(body) body.innerHTML = adminResultsBodyHTML();
+  if(body) body.innerHTML = adminTab==='results' ? adminResultsBodyHTML() : adminMatchesBodyHTML();
   const exportBtn = document.querySelector('.admin-btn.ghost');
-  if(exportBtn) exportBtn.disabled = !(adminResults && adminResults.length);
+  if(exportBtn) exportBtn.disabled = !(adminTab==='results' && adminResults && adminResults.length);
 }
 
 function handleAdminLogout(){
   fetch('/api/admin-logout', { method:'POST' }).finally(()=>{
     adminResults = null;
     adminResultsError = '';
+    adminMatches = null;
+    adminMatchesError = '';
+    adminTab = 'results';
     adminCode = '';
     entryTab = 'guest';
     screen = 'entry';
