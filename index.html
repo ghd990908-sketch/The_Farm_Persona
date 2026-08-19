@@ -149,10 +149,6 @@
   .result-detail-text{ font-size:13px; color:var(--ink-soft); line-height:1.7; text-align:center; margin:0; }
   .tag-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin:12px 0 0; }
   .persona-tag{ font-family:'Pretendard',sans-serif; font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px; }
-  .hybrid-note{
-    display:block; width:fit-content; margin:12px auto 0; font-family:'Pretendard',sans-serif; font-size:10.5px;
-    border:1px dashed var(--line); border-radius:100px; padding:5px 11px;
-  }
   .radar-wrap{ display:flex; justify-content:center; padding:10px 0 4px; }
 
   .clearance h3{ font-family:'Pretendard',sans-serif; font-size:10.5px; letter-spacing:0.1em; color:var(--ink-soft); margin:16px 0 10px; }
@@ -213,6 +209,8 @@
   }
   .admin-row-btn:hover{ border-color:var(--accent); color:var(--accent); }
   .admin-row-btn:disabled{ opacity:0.5; cursor:default; }
+  .admin-row-btn.danger{ border-color:var(--operator); color:var(--operator); margin-left:6px; }
+  .admin-row-btn.danger:hover{ background:var(--operator); border-color:var(--operator); color:#fff; }
   .admin-empty{ padding:44px 0; text-align:center; color:var(--ink-soft); font-family:'Pretendard',sans-serif; font-size:12.5px; }
   .admin-table-wrap{ overflow-x:auto; }
   .admin-table{ width:100%; border-collapse:collapse; font-size:13px; }
@@ -516,8 +514,7 @@ async function handleGuestStart(){
         raw:null,
         pct: (r.scores && r.scores.pct) || {},
         primary: r.primary_type,
-        secondary: r.secondary_type,
-        isHybrid: !!r.is_hybrid
+        secondary: r.secondary_type
       };
       screen = 'result';
       render();
@@ -630,10 +627,9 @@ function computeAndShowResult(){
 
   const sorted = AXIS_ORDER.slice().sort((a,b)=>raw[b]-raw[a]);
   const primary = sorted[0], secondary = sorted[1];
-  const isHybrid = (raw[primary]-raw[secondary]) <= 4;
 
   screen='result';
-  render_result_data = { raw, pct, primary, secondary, isHybrid };
+  render_result_data = { raw, pct, primary, secondary };
   render();
   submitResult(render_result_data);
 }
@@ -648,8 +644,7 @@ function submitResult(data){
       answers: answers,
       scores: { raw: data.raw, pct: data.pct },
       primaryType: data.primary,
-      secondaryType: data.secondary,
-      isHybrid: data.isHybrid
+      secondaryType: data.secondary
     })
   }).catch(()=>{ /* 참가자 화면 표시는 이미 끝났으므로 전송 실패는 조용히 무시 */ });
 }
@@ -726,9 +721,8 @@ function buildPersonaBadge(key, accent){
 /* ---------------------------------------------------------
    8. RESULT — PERSONA CARD
 --------------------------------------------------------- */
-function resultCardHTML(name, pct, primary, secondary, isHybrid){
+function resultCardHTML(name, pct, primary){
   const P = PERSONAS[primary];
-  const S = PERSONAS[secondary];
 
   return `
     <div class="card">
@@ -747,7 +741,6 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid){
           <div class="tag-row">
             ${(P.tags || []).map(t=>`<span class="persona-tag" style="background:${P.colorHex}1A; color:${P.colorHex};">#${t}</span>`).join('')}
           </div>
-          ${isHybrid ? `<div class="hybrid-note mono">${P.name} × ${S.name} 하이브리드 판독</div>` : ''}
         </div>
 
         <div class="radar-wrap">${buildRadarSVG(pct, P.colorHex)}</div>
@@ -770,7 +763,7 @@ function resultCardHTML(name, pct, primary, secondary, isHybrid){
 }
 
 function renderResult(){
-  const { pct, primary, secondary, isHybrid } = render_result_data;
+  const { pct, primary } = render_result_data;
   const P = PERSONAS[primary];
   const cta = `
     <div class="cta-row">
@@ -787,7 +780,7 @@ function renderResult(){
   `;
 
   stage.innerHTML = `
-    ${resultCardHTML(guestName, pct, primary, secondary, isHybrid)}
+    ${resultCardHTML(guestName, pct, primary)}
     <div class="result-detail"><p class="result-detail-text">${P.summary}</p></div>
     ${matchCta}
     ${cta}
@@ -1054,8 +1047,8 @@ async function downloadRowImage(i, btn){
 
   try{
     const pct = (r.scores && r.scores.pct) || {};
-    const primary = r.primary_type, secondary = r.secondary_type;
-    wrapper.innerHTML = resultCardHTML(r.name, pct, primary, secondary, !!r.is_hybrid);
+    const primary = r.primary_type;
+    wrapper.innerHTML = resultCardHTML(r.name, pct, primary);
     animateRadarGrow(pct, 1);
     await waitForImages(wrapper);
     await new Promise(resolve => setTimeout(resolve, 80));
@@ -1074,6 +1067,26 @@ async function downloadRowImage(i, btn){
     alert('이미지 저장에 실패했어요. 다시 시도해주세요.');
   } finally {
     document.body.removeChild(wrapper);
+    if(btn){ btn.disabled = false; btn.textContent = prevText; }
+  }
+}
+
+async function deleteResultRow(id, btn){
+  if(!confirm('이 결과를 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
+  const prevText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '삭제 중...'; }
+  try{
+    const res = await fetch('/api/admin-delete-result', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || '삭제 실패');
+    adminResults = adminResults.filter(r => r.id !== id);
+    refreshAdminBody();
+  }catch(e){
+    alert('삭제에 실패했어요. 다시 시도해주세요.');
     if(btn){ btn.disabled = false; btn.textContent = prevText; }
   }
 }
@@ -1181,9 +1194,9 @@ function adminResultsBodyHTML(){
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr>
-          <th>이름</th><th>주유형</th><th>부유형</th><th>하이브리드</th>
+          <th>이름</th><th>주유형</th><th>부유형</th>
           ${AXIS_ORDER.map(k=>`<th>${AXIS_LABEL[k]}</th>`).join('')}
-          <th>완료시각</th><th>다운로드</th>
+          <th>완료시각</th><th>관리</th>
         </tr></thead>
         <tbody>
           ${adminResults.map((r,i)=>{
@@ -1194,10 +1207,12 @@ function adminResultsBodyHTML(){
               <td>${escapeHtml(r.name)}</td>
               <td>${escapeHtml(primaryP ? primaryP.name : r.primary_type)}</td>
               <td>${escapeHtml(secondaryP ? secondaryP.name : r.secondary_type)}</td>
-              <td>${r.is_hybrid ? 'Y' : '-'}</td>
               ${AXIS_ORDER.map(k=>`<td>${s[k] ?? '-'}</td>`).join('')}
               <td class="mono">${formatDate(r.submitted_at)}</td>
-              <td><button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button></td>
+              <td>
+                <button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button>
+                <button class="admin-row-btn danger" onclick="deleteResultRow('${r.id}', this)">삭제</button>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1256,7 +1271,7 @@ function formatDate(iso){
 
 function exportCSV(){
   if(!adminResults || !adminResults.length) return;
-  const headers = ['이름','주유형','부유형','하이브리드', ...AXIS_ORDER.map(k=>AXIS_LABEL[k]), '완료시각'];
+  const headers = ['이름','주유형','부유형', ...AXIS_ORDER.map(k=>AXIS_LABEL[k]), '완료시각'];
   const rows = adminResults.map(r=>{
     const s = (r.scores && r.scores.pct) ? r.scores.pct : {};
     const primaryP = PERSONAS[r.primary_type];
@@ -1265,7 +1280,6 @@ function exportCSV(){
       r.name,
       primaryP ? primaryP.name : r.primary_type,
       secondaryP ? secondaryP.name : r.secondary_type,
-      r.is_hybrid ? 'Y' : '-',
       ...AXIS_ORDER.map(k => s[k] ?? ''),
       formatDate(r.submitted_at)
     ];

@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
       body = {};
     }
   }
-  const { name, phoneLast4, answers, scores, primaryType, secondaryType, isHybrid } = body || {};
+  const { name, phoneLast4, answers, scores, primaryType, secondaryType } = body || {};
 
   if (!name || typeof name !== 'string' || !name.trim()) {
     res.status(400).json({ ok: false, error: 'name required' });
@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
     scores,
     primary_type: primaryType,
     secondary_type: secondaryType,
-    is_hybrid: !!isHybrid,
+    is_hybrid: false,
   });
 
   if (error) {
