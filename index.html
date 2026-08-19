@@ -433,7 +433,6 @@ function renderEntry(){
     <div class="card">
       <div class="card-topline">
         <span class="tag">THE FARM : Plug-IN</span>
-        <span class="tag">${entryTab==='guest' ? 'PERSONA SCAN' : 'STAFF LOGIN'}</span>
       </div>
       <div class="card-inner">
         <div class="entry-tabs">
@@ -445,7 +444,7 @@ function renderEntry(){
       <div class="divider"></div>
       <div class="stub">
         ${entryTab==='guest' ? `
-          <button class="primary" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '검사 시작하기 →'}</button>
+          <button class="primary match-cta" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '검사 시작하기 →'}</button>
           <div class="meta-line">약 2분 소요 · 16문항 · 결과 즉시 확인</div>
         ` : `
           <button class="primary" onclick="handleAdminLogin()" ${adminLoading?'disabled':''}>${adminLoading?'확인 중...':'로그인'}</button>
@@ -465,8 +464,7 @@ function switchEntryTab(tab){
 
 function guestPanelHTML(){
   return `
-    <div class="mono" style="font-size:11px;color:var(--ink-soft);letter-spacing:0.14em;">PERSONA SCAN · WORK STYLE</div>
-    <h1 class="title display">내 업무 유형에 맞는<br>페르소나를 확인해보세요</h1>
+    <h1 class="title display">나를 대표할 수 있는<br>페르소나를 확인해보세요</h1>
     <p class="lede">
       16개 문항에 답하면, 본인에게 가장 적합한 유형의 업무 페르소나를 확인할 수 있습니다.
       정답은 없어요 - 있는 그대로 답해주세요.
