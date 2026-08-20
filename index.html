@@ -208,33 +208,32 @@
   .match-result-label{ font-size:10px; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:8px; }
   .match-result-name{ font-size:14px; font-weight:700; margin-bottom:4px; word-break:keep-all; }
   .match-result-sub{ font-size:11.5px; color:var(--ink-soft); line-height:1.55; word-break:keep-all; }
-  .recap-row{ display:flex; align-items:center; gap:12px; }
-  .recap-avatar{ flex-shrink:0; width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--paper); }
-  .recap-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .recap-avatar.mentor-avatar{ border:1.5px dashed var(--line); }
-  .recap-text{ min-width:0; }
-  .recap-title{ font-size:14.5px; font-weight:800; margin-bottom:2px; word-break:keep-all; }
-  .recap-sub{ font-size:11.5px; color:var(--ink-soft); word-break:keep-all; }
-
-  .persona-mentor-pair{ display:flex; flex-direction:column; }
-  .persona-mentor-pair .pair-block{ border-radius:12px; }
-  .persona-mentor-pair .pair-block:first-child{ border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; }
-  .persona-mentor-pair .pair-block:last-child{ border-top-left-radius:0; border-top-right-radius:0; }
-  .connect-line-wrap{
-    position:relative; height:26px; display:flex; align-items:center; justify-content:center;
-    background:#1D1911; border-left:1px solid var(--line); border-right:1px solid var(--line);
+  .match-pair-block{ background:#1D1911; border:1px solid var(--line); border-radius:14px; padding:22px 14px 18px; }
+  .pair-avatars-row{ display:flex; align-items:flex-start; justify-content:center; gap:2px; }
+  .pair-col{ flex:1; min-width:0; max-width:130px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .pair-avatar{
+    width:78px; height:78px; border-radius:50%; overflow:hidden; background:var(--paper);
+    border:3px solid; animation:pairPulse 2.2s ease-in-out infinite;
   }
-  .connect-line{ width:2px; height:100%; opacity:0.3; }
-  .connect-spark{ position:absolute; left:50%; margin-left:-4px; width:8px; height:8px; border-radius:50%; animation:sparkTravel 2s ease-in-out infinite; }
-  .connect-label{ position:absolute; left:50%; margin-left:16px; font-size:8.5px; letter-spacing:0.14em; font-weight:700; white-space:nowrap; }
-  @keyframes sparkTravel{
-    0%{ top:2px; opacity:0; }
-    20%{ opacity:1; }
-    80%{ opacity:1; }
-    100%{ top:calc(100% - 10px); opacity:0; }
+  .pair-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pair-avatar.mentor-avatar{ border-style:dashed; }
+  .pair-name{ font-size:13.5px; font-weight:800; margin-top:10px; word-break:keep-all; line-height:1.3; }
+  .pair-sub{ font-size:10.5px; color:var(--ink-soft); margin-top:3px; word-break:keep-all; line-height:1.4; }
+  .pair-link{ position:relative; flex-shrink:0; width:40px; display:flex; align-items:center; justify-content:center; align-self:center; margin-top:33px; }
+  .pair-link-beam{ position:absolute; width:100%; height:5px; border-radius:4px; animation:beamPulse 1.6s ease-in-out infinite; }
+  .pair-link-badge{
+    position:relative; z-index:1; width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; animation:badgePulse 2.2s ease-in-out infinite;
   }
+  .pair-matched-pill{
+    display:block; width:fit-content; margin:18px auto 0; padding:7px 22px; border-radius:100px;
+    font-family:'Pretendard',sans-serif; font-weight:800; font-size:12.5px; letter-spacing:0.1em;
+  }
+  @keyframes pairPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
+  @keyframes beamPulse{ 0%,100%{ opacity:0.35; } 50%{ opacity:1; } }
+  @keyframes badgePulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.18); } }
   @media (prefers-reduced-motion: reduce){
-    .connect-spark{ animation:none; top:50%; opacity:0.9; }
+    .pair-avatar, .pair-link-beam, .pair-link-badge{ animation:none; }
   }
   .decision-q{ text-align:center; font-size:15px; font-weight:700; margin:6px 0 4px; word-break:keep-all; }
   .invite-row{ display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; border-bottom:1px solid var(--line); }
@@ -992,33 +991,27 @@ function renderMatchResult(){
         <p class="lede" style="margin:10px 0 20px;">${whyYouText(primary, matchEventType, region.name)}</p>
 
         <div class="match-result-grid">
-          <div class="persona-mentor-pair">
-            <div class="match-result-block pair-block">
-              <div class="match-result-label mono">당신의 페르소나</div>
-              <div class="recap-row">
-                <div class="recap-avatar" style="box-shadow:0 0 0 2px ${P.colorHex};"><img src="assets/personas/${P.key}.jpg" alt="" /></div>
-                <div class="recap-text">
-                  <div class="recap-title" style="color:${P.colorHex};">${escapeHtml(P.name)}</div>
-                  <div class="recap-sub">${escapeHtml(P.nickname)}</div>
+          <div class="match-pair-block">
+            <div class="pair-avatars-row">
+              <div class="pair-col">
+                <div class="pair-avatar" style="border-color:${P.colorHex}; box-shadow:0 0 0 5px ${P.colorHex}22, 0 0 26px 6px ${P.colorHex}55;"><img src="assets/personas/${P.key}.jpg" alt="" /></div>
+                <div class="pair-name" style="color:${P.colorHex};">${escapeHtml(P.name)}</div>
+                <div class="pair-sub">${escapeHtml(P.nickname)}</div>
+              </div>
+              <div class="pair-link">
+                <div class="pair-link-beam" style="background:${P.colorHex};"></div>
+                <div class="pair-link-badge" style="background:${P.colorHex}; box-shadow:0 0 0 4px var(--card), 0 0 22px 6px ${P.colorHex}aa;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="var(--on-accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
-            </div>
-            <div class="connect-line-wrap">
-              <div class="connect-line" style="background:${P.colorHex};"></div>
-              <div class="connect-spark" style="background:${P.colorHex}; box-shadow:0 0 10px 3px ${P.colorHex};"></div>
-              <span class="connect-label mono" style="color:${P.colorHex};">MATCHED</span>
-            </div>
-            <div class="match-result-block pair-block">
-              <div class="match-result-label mono">당신의 멘토</div>
-              <div class="recap-row">
-                <div class="recap-avatar mentor-avatar" style="box-shadow:0 0 0 2px ${P.colorHex}99;">${mentor.photo ? `<img src="${mentor.photo}" alt="" />` : ''}</div>
-                <div class="recap-text">
-                  <div class="recap-title">${escapeHtml(mentor.nickname)}</div>
-                  <div class="recap-sub">${mentor.intro ? escapeHtml(mentor.intro) : '한줄 소개 준비 중'}</div>
-                </div>
+              <div class="pair-col">
+                <div class="pair-avatar mentor-avatar" style="border-color:${P.colorHex}; box-shadow:0 0 0 5px ${P.colorHex}22, 0 0 26px 6px ${P.colorHex}55;">${mentor.photo ? `<img src="${mentor.photo}" alt="" />` : ''}</div>
+                <div class="pair-name">${escapeHtml(mentor.nickname)}</div>
+                <div class="pair-sub">${mentor.intro ? escapeHtml(mentor.intro) : '한줄 소개 준비 중'}</div>
               </div>
-              <div class="match-result-sub" style="margin-top:8px; opacity:0.75;">멘토는 행사 당일 공개됩니다.</div>
             </div>
+            <div class="pair-matched-pill" style="background:${P.colorHex}; color:var(--on-accent); box-shadow:0 0 24px 3px ${P.colorHex}88;">MATCHED</div>
+            <div class="match-result-sub" style="text-align:center; margin-top:10px; opacity:0.75;">멘토는 행사 당일 공개됩니다.</div>
           </div>
           <div class="match-result-block">
             <div class="match-result-label mono">THE FARM에서</div>
