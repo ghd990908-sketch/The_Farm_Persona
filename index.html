@@ -193,9 +193,10 @@
   .match-photo{
     flex-shrink:0; width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center;
     font-family:'Pretendard',sans-serif; font-weight:800; font-size:11.5px; letter-spacing:0.02em; text-align:center;
-    transition:transform 0.2s ease;
+    transition:transform 0.2s ease; overflow:hidden;
   }
   .region-map-svg{ width:46px; height:46px; object-fit:contain; animation:regionFloat 3.2s ease-in-out infinite; }
+  .event-type-icon{ width:100%; height:100%; object-fit:cover; }
   .match-option-card:hover .match-photo{ transform:scale(1.08); }
   @keyframes regionFloat{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-2px) rotate(-3deg); } }
   @media (prefers-reduced-motion: reduce){ .region-map-svg{ animation:none; } }
@@ -1167,6 +1168,10 @@ function regionMapIcon(key){
   return `<img class="region-map-svg" src="assets/regions/${key}.png" alt="" />`;
 }
 
+function eventTypeIcon(key){
+  return `<img class="event-type-icon" src="assets/event-types/${key}.png" alt="" />`;
+}
+
 function matchOptionCardHTML(badge, colorHex, name, desc, onclickFn, tags){
   return `
     <div class="match-option-card" onclick="${onclickFn}">
@@ -1193,7 +1198,7 @@ function renderMatchType(){
         <div class="match-option-list">
           ${EVENT_TYPE_ORDER.map(k=>{
             const e = EVENT_TYPES[k];
-            return matchOptionCardHTML(e.badge, e.colorHex, e.label, e.desc, `selectEventType('${e.key}')`, e.tags);
+            return matchOptionCardHTML(eventTypeIcon(e.key), e.colorHex, e.label, e.desc, `selectEventType('${e.key}')`, e.tags);
           }).join('')}
         </div>
       </div>
