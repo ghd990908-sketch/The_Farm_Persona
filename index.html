@@ -289,18 +289,16 @@
   .landing-lede{ font-size:13.5px; color:var(--ink-soft); line-height:1.75; margin:0 0 26px; word-break:keep-all; }
 
   .landing-steps{ display:flex; flex-direction:column; margin-bottom:6px; }
-  .step-item{ position:relative; padding:0 0 20px; }
+  .step-item{ position:relative; padding:0 0 26px; }
   .step-item:last-child{ padding-bottom:0; }
   .step-item:not(:last-child)::after{
-    content:'↓'; position:absolute; left:6px; bottom:1px; color:var(--ink-soft); font-size:13px; opacity:0.55; line-height:1;
+    content:'↓'; position:absolute; left:2px; bottom:2px; color:var(--ink-soft); font-size:15px; opacity:0.5; line-height:1;
   }
-  .step-num{
-    display:inline-flex; padding:5px 11px; border-radius:999px; background:var(--accent-soft); color:var(--accent);
-    align-items:center; justify-content:center; font-size:11.5px; font-weight:800; margin-bottom:8px;
-    font-family:'Pretendard',sans-serif; letter-spacing:0.02em; white-space:nowrap;
+  .step-heading{
+    font-size:22px; line-height:1.32; margin-bottom:6px; word-break:keep-all;
   }
-  .step-title{ font-size:14px; font-weight:700; color:var(--ink); margin-bottom:4px; word-break:keep-all; }
-  .step-desc{ font-size:12.5px; color:var(--ink-soft); line-height:1.65; word-break:keep-all; }
+  .step-heading .step-index{ color:var(--accent); }
+  .step-desc{ font-size:13px; color:var(--ink-soft); line-height:1.65; word-break:keep-all; }
 
   /* ---------- plug-in drag interaction ---------- */
   .plug-zone{ padding:20px 24px 26px; }
@@ -329,6 +327,23 @@
   .plug-head.no-hint{ animation:none; }
   .plug-head.dragging{ cursor:grabbing; box-shadow:0 8px 22px rgba(0,0,0,0.5); }
 
+  .plug-arrows{
+    position:absolute; left:66px; right:58px; top:50%; transform:translateY(-50%);
+    display:flex; justify-content:space-between; align-items:center; pointer-events:none; z-index:1;
+  }
+  .plug-arrows span{
+    font-size:19px; font-weight:800; color:var(--accent); font-family:'Pretendard',sans-serif;
+    opacity:0.25; animation:chevronPulse 1.3s ease-in-out infinite; transition:opacity 0.25s ease;
+  }
+  .plug-arrows span:nth-child(2){ animation-delay:0.14s; }
+  .plug-arrows span:nth-child(3){ animation-delay:0.28s; }
+  .plug-track.no-hint .plug-arrows, .plug-track.is-plugged .plug-arrows{ opacity:0; }
+
+  @keyframes chevronPulse{
+    0%,100%{ opacity:0.2; transform:translateX(0); }
+    50%{ opacity:0.9; transform:translateX(7px); }
+  }
+
   .plug-track.is-plugged .plug-outlet{
     color:var(--accent); border-color:var(--accent);
     box-shadow:0 0 0 4px var(--accent-soft), 0 0 22px 4px rgba(227,168,61,0.55);
@@ -352,7 +367,9 @@
   @media (max-width:420px){
     .landing-inner{ padding:24px 18px 4px; }
     h1.landing-title{ font-size:21px; }
+    .step-heading{ font-size:19px; }
     .plug-zone{ padding:16px 18px 22px; }
+    .plug-arrows{ left:60px; right:52px; }
   }
 </style>
 </head>
@@ -623,19 +640,16 @@ function renderLanding(){
 
         <div class="landing-steps">
           <div class="step-item">
-            <div class="step-num mono">1단계</div>
-            <div class="step-title">페르소나 유형 검사</div>
-            <div class="step-desc">16개의 질문에 답하여 나의 강점을 대표하는 페르소나를 확인하세요.</div>
+            <div class="step-heading display"><span class="step-index">1단계</span> : 페르소나 유형 검사</div>
+            <div class="step-desc">- 16개의 질문에 답하여 나의 강점을 대표하는 페르소나를 확인하세요.</div>
           </div>
           <div class="step-item">
-            <div class="step-num mono">2단계</div>
-            <div class="step-title">프로젝트 유형 / 지역 선택하기</div>
-            <div class="step-desc">원하는 프로젝트의 유형과 지역을 선택하여, 내 페르소나에게 가장 잘 어울리는 행사와 전문 멘토가 매칭됩니다.</div>
+            <div class="step-heading display"><span class="step-index">2단계</span> : 멘토 매칭하기</div>
+            <div class="step-desc">- 원하는 프로젝트의 유형과 지역을 선택하면, 내 페르소나에게 가장 잘 어울리는 행사와 전문 멘토가 매칭됩니다.</div>
           </div>
           <div class="step-item">
-            <div class="step-num mono">3단계</div>
-            <div class="step-title">THE FARM에 PLUG-IN 하기</div>
-            <div class="step-desc">8월 26일(수) 16시, 성수지앵에서 매칭된 전문 멘토를 직접 만나보세요!</div>
+            <div class="step-heading display"><span class="step-index">3단계</span> : THE FARM에 PLUG-IN 하기</div>
+            <div class="step-desc">- 8월 26일(수) 16시, ${escapeHtml(THE_FARM_EVENT.venue)}에서 매칭된 전문멘토를 직접 만나보세요!</div>
           </div>
         </div>
       </div>
@@ -646,6 +660,7 @@ function renderLanding(){
         <div class="plug-hint mono">전기 코드를 드래그해서 콘센트에 꽂아보세요</div>
         <div class="plug-track" id="plugTrack">
           <div class="plug-cord-fill" id="plugCordFill"></div>
+          <div class="plug-arrows" aria-hidden="true"><span>›</span><span>›</span><span>›</span></div>
           <div class="plug-outlet" id="plugOutlet">${outletSVG}</div>
           <button type="button" class="plug-head" id="plugHead" aria-label="드래그해서 검사 시작하기">${plugSVG}</button>
         </div>
@@ -703,6 +718,7 @@ function initPlugDrag(){
     const duration = 420;
     const t0 = performance.now();
     head.classList.add('no-hint');
+    track.classList.add('no-hint');
     function step(now){
       const t = Math.min((now - t0) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
@@ -720,6 +736,7 @@ function initPlugDrag(){
     moved = false;
     downClientX = e.clientX;
     head.classList.add('dragging', 'no-hint');
+    track.classList.add('no-hint');
     try{ head.setPointerCapture(e.pointerId); }catch(_){}
     const trackRect = track.getBoundingClientRect();
     grabOffsetX = e.clientX - trackRect.left - currentX;
@@ -1092,7 +1109,7 @@ function resultCardHTML(name, pct, primary, includeCta){
 
         ${includeCta ? `
         <div style="padding:6px 0 0;">
-          <button class="primary match-cta" onclick="startMatchFlow()">2단계 : 나에게 어울리는 행사 및 멘토 매칭하기 →</button>
+          <button class="primary match-cta" onclick="startMatchFlow()">2단계 : 멘토 매칭하기 →</button>
         </div>
         ` : ''}
       </div>
