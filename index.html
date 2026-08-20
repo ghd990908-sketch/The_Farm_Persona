@@ -357,12 +357,6 @@ const FIELD_ROLE = {
   b2g: { title:'Global Program Coordinator', sub:'Policy & Industry Liaison' },
   b2c: { title:'Global Event Operator', sub:'Participant Experience / On-site Coordination' },
 };
-const FIELD_MENTOR = {
-  b2b: '글로벌 비즈니스 파트너십을 실제로 성사시킨 PM',
-  b2g: '정부·기관 협력 프로젝트를 이끈 PM',
-  b2c: '글로벌 콘텐츠 프로젝트를 실제로 운영한 PM',
-};
-
 const REGION_ORDER = ['asia','middleeast','europe','namerica','samerica'];
 const REGIONS = {
   asia:       { key:'asia',       code:'ASIA',       name:'동북·동남아시아', cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E3A83D' },
@@ -372,17 +366,14 @@ const REGIONS = {
   samerica:   { key:'samerica',   code:'S.AMERICA',  name:'남아메리카',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#9B6FE0' },
 };
 
-// 각 항목의 eventTypes/regions/personas 배열을 채워두면 매칭 시 가중치로 사용됩니다.
-// 지금은 페르소나 유형별 자리표시자만 있어서, 실제 데이터가 오기 전까지는 페르소나 기준으로만 매칭됩니다.
-const MENTORS = AXIS_ORDER.map(k => ({
-  id: `mentor_${k}`,
-  name: '[멘토 이름 — 준비 중]',
-  org: '[소속 — 준비 중]',
-  intro: '[한줄 소개 — 준비 중]',
-  eventTypes: EVENT_TYPE_ORDER.slice(),
-  regions: REGION_ORDER.slice(),
-  personas: [k],
-}));
+// 멘토 4명 확정. 담당 지역은 두지 않음(전 지역 wildcard) — 필드(B2B/B2G/B2C)로 1차 매칭하고,
+// B2B는 멘토가 2명이라 페르소나로 한 번 더 가른다. intro는 아직 비어있음(추후 전달 예정).
+const MENTORS = [
+  { id:'mentor_connector', nickname:'비즈니스 연결자', intro:'', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['explorer','thinker'] },
+  { id:'mentor_director',  nickname:'수주 전략 디렉터', intro:'', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['builder','operator'] },
+  { id:'mentor_public',    nickname:'공공 프로젝트 설계자', intro:'', eventTypes:['b2g'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
+  { id:'mentor_festival',  nickname:'글로벌 페스티벌 운영자', intro:'', eventTypes:['b2c'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
+];
 function mkProject(id, eventType, region, name, country){
   return { id, eventTypes:[eventType], regions:[region], personas: AXIS_ORDER.slice(), name, country: country || '' };
 }
@@ -956,7 +947,7 @@ function renderMatchResult(){
   const project = matchProject;
   const primary = render_result_data.primary;
   const role = FIELD_ROLE[matchEventType];
-  const mentorText = FIELD_MENTOR[matchEventType];
+  const mentor = matchMentor;
 
   stage.innerHTML = `
     <div class="card">
@@ -977,7 +968,9 @@ function renderMatchResult(){
           </div>
           <div class="match-result-block">
             <div class="match-result-label mono">YOUR MENTOR</div>
-            <div class="match-result-sub">${escapeHtml(mentorText)}</div>
+            <div class="match-result-name">${escapeHtml(mentor.nickname)}</div>
+            ${mentor.intro ? `<div class="match-result-sub">${escapeHtml(mentor.intro)}</div>` : ''}
+            <div class="match-result-sub" style="margin-top:4px; opacity:0.75;">멘토는 행사 당일 공개됩니다.</div>
           </div>
           <div class="match-result-block">
             <div class="match-result-label mono">AT THE FARM</div>
@@ -1013,7 +1006,7 @@ async function handleMatchDecision(isYes){
         eventType: matchEventType,
         region: matchRegion,
         mentorId: matchMentor.id,
-        mentorName: matchMentor.name,
+        mentorName: matchMentor.nickname,
         projectId: matchProject.id,
         projectName: matchProject.name
       })
