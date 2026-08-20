@@ -395,10 +395,10 @@ const REGIONS = {
 // 멘토 4명 확정. 담당 지역은 두지 않음(전 지역 wildcard) — 필드(B2B/B2G/B2C)로 1차 매칭하고,
 // B2B는 멘토가 2명이라 페르소나로 한 번 더 가른다. intro는 아직 비어있음(추후 전달 예정).
 const MENTORS = [
-  { id:'mentor_connector', nickname:'비즈니스 연결자', intro:'', photo:'', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['explorer','thinker'] },
-  { id:'mentor_director',  nickname:'수주 전략 디렉터', intro:'', photo:'', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['builder','operator'] },
-  { id:'mentor_public',    nickname:'공공 프로젝트 설계자', intro:'', photo:'', eventTypes:['b2g'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
-  { id:'mentor_festival',  nickname:'글로벌 페스티벌 운영자', intro:'', photo:'', eventTypes:['b2c'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
+  { id:'mentor_connector', nickname:'비즈니스 연결자', intro:'업계 경력 15년 / 기업 커뮤니케이션 전문가', photo:'assets/mentors/mentor_connector.jpg', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['explorer','thinker'] },
+  { id:'mentor_director',  nickname:'수주·전략 디렉터', intro:'업계 경력 26년 / 프로젝트 PT 전문가', photo:'assets/mentors/mentor_director.jpg', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['builder','operator'] },
+  { id:'mentor_public',    nickname:'공공프로젝트 설계자', intro:'업계 경력 10년 / 공공사업 담당 PMO', photo:'assets/mentors/mentor_public.jpg', eventTypes:['b2g'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
+  { id:'mentor_festival',  nickname:'글로벌 페스티벌 운영자', intro:'업계 경력 22년 / 해외사업 담당 PMO', photo:'assets/mentors/mentor_festival.jpg', eventTypes:['b2c'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
 ];
 function mkProject(id, eventType, region, name, country){
   return { id, eventTypes:[eventType], regions:[region], personas: AXIS_ORDER.slice(), name, country: country || '' };
@@ -1005,7 +1005,7 @@ function renderMatchResult(){
                 </div>
               </div>
               <div class="pair-col">
-                <div class="pair-avatar mentor-avatar" style="border-color:${P.colorHex}; box-shadow:0 0 0 5px ${P.colorHex}22, 0 0 26px 6px ${P.colorHex}55;">${mentor.photo ? `<img src="${mentor.photo}" alt="" />` : ''}</div>
+                <div class="pair-avatar${mentor.photo ? '' : ' mentor-avatar'}" style="border-color:${P.colorHex}; box-shadow:0 0 0 5px ${P.colorHex}22, 0 0 26px 6px ${P.colorHex}55;">${mentor.photo ? `<img src="${mentor.photo}" alt="" />` : ''}</div>
                 <div class="pair-name">${escapeHtml(mentor.nickname)}</div>
                 <div class="pair-sub">${mentor.intro ? escapeHtml(mentor.intro) : '한줄 소개 준비 중'}</div>
               </div>
