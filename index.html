@@ -1011,7 +1011,7 @@ function renderMatchResult(){
               </div>
             </div>
             <div class="pair-matched-pill" style="background:${P.colorHex}; color:var(--on-accent); box-shadow:0 0 24px 3px ${P.colorHex}88;">MATCHED</div>
-            <div class="match-result-sub" style="text-align:center; margin-top:10px; opacity:0.75;">멘토는 행사 당일 공개됩니다.</div>
+            <div class="match-result-sub" style="text-align:center; margin-top:10px; opacity:0.75;">행사 당일 매칭된 멘토와 만나볼 수 있습니다.</div>
           </div>
           <div class="match-result-block">
             <div class="match-result-label mono">THE FARM에서</div>
@@ -1077,6 +1077,7 @@ function renderMatchInvite(){
           <div class="invite-row"><span class="invite-label mono">YOUR PERSONA</span><span class="invite-value">${escapeHtml(P.name)}</span></div>
           <div class="invite-row"><span class="invite-label mono">YOUR FIELD</span><span class="invite-value">${escapeHtml(eventT.label)}</span></div>
           <div class="invite-row"><span class="invite-label mono">YOUR REGION</span><span class="invite-value">${escapeHtml(region.name)}</span></div>
+          <div class="invite-row"><span class="invite-label mono">YOUR MENTOR</span><span class="invite-value">${escapeHtml(matchMentor.nickname)}</span></div>
         </div>
 
         <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">현장에서 당신에게 추천된 프로젝트와 멘토를 직접 만나게 됩니다.</p>
