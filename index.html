@@ -356,11 +356,6 @@ const FIELD_WHY = {
 function whyYouText(persona, eventType, regionName){
   return `${PERSONA_WHY[persona]} ${FIELD_WHY[eventType]} ${regionName} 프로젝트에서 그 강점이 가장 빛날 수 있습니다.`;
 }
-const FIELD_ROLE = {
-  b2b: { title:'Global Business Coordinator', sub:'Partnership Development / Deal Support' },
-  b2g: { title:'Global Program Coordinator', sub:'Policy & Industry Liaison' },
-  b2c: { title:'Global Event Operator', sub:'Participant Experience / On-site Coordination' },
-};
 const REGION_ORDER = ['asia','middleeast','europe','namerica','samerica'];
 const REGIONS = {
   asia:       { key:'asia',       code:'ASIA',       name:'아시아', cities:'일본, 중국, 베트남, 싱가포르 등', colorHex:'#E3A83D' },
@@ -954,7 +949,6 @@ function renderMatchResult(){
   const region = REGIONS[matchRegion];
   const project = matchProject;
   const primary = render_result_data.primary;
-  const role = FIELD_ROLE[matchEventType];
   const mentor = matchMentor;
 
   stage.innerHTML = `
@@ -970,18 +964,13 @@ function renderMatchResult(){
 
         <div class="match-result-grid">
           <div class="match-result-block">
-            <div class="match-result-label mono">YOUR ROLE</div>
-            <div class="match-result-name">${escapeHtml(role.title)}</div>
-            <div class="match-result-sub">${escapeHtml(role.sub)}</div>
-          </div>
-          <div class="match-result-block">
-            <div class="match-result-label mono">YOUR MENTOR</div>
+            <div class="match-result-label mono">당신의 멘토</div>
             <div class="match-result-name">${escapeHtml(mentor.nickname)}</div>
             ${mentor.intro ? `<div class="match-result-sub">${escapeHtml(mentor.intro)}</div>` : ''}
             <div class="match-result-sub" style="margin-top:4px; opacity:0.75;">멘토는 행사 당일 공개됩니다.</div>
           </div>
           <div class="match-result-block">
-            <div class="match-result-label mono">AT THE FARM</div>
+            <div class="match-result-label mono">THE FARM에서</div>
             <div class="match-result-sub">실제 프로젝트 사례를 보고, 멘토와 함께 15분 Micro Project를 경험합니다.</div>
           </div>
         </div>
