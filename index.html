@@ -193,7 +193,12 @@
   .match-photo{
     flex-shrink:0; width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center;
     font-family:'Pretendard',sans-serif; font-weight:800; font-size:11.5px; letter-spacing:0.02em; text-align:center;
+    transition:transform 0.2s ease;
   }
+  .region-map-svg{ animation:regionFloat 3.2s ease-in-out infinite; }
+  .match-option-card:hover .match-photo{ transform:scale(1.08); }
+  @keyframes regionFloat{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-2px) rotate(-3deg); } }
+  @media (prefers-reduced-motion: reduce){ .region-map-svg{ animation:none; } }
   .match-option-body{ min-width:0; }
   .match-option-name{ font-size:14.5px; font-weight:700; margin-bottom:3px; word-break:keep-all; }
   .match-option-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.5; word-break:keep-all; }
@@ -359,11 +364,11 @@ const FIELD_ROLE = {
 };
 const REGION_ORDER = ['asia','middleeast','europe','namerica','samerica'];
 const REGIONS = {
-  asia:       { key:'asia',       code:'ASIA',       name:'동북·동남아시아', cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E3A83D' },
-  middleeast: { key:'middleeast', code:'MIDEAST',    name:'중동',           cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#E2604A' },
-  europe:     { key:'europe',     code:'EUROPE',     name:'유럽',           cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#3FA6C4' },
-  namerica:   { key:'namerica',   code:'N.AMERICA',  name:'북아메리카',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#4CBE84' },
-  samerica:   { key:'samerica',   code:'S.AMERICA',  name:'남아메리카',     cities:'[다녀온 국가·도시 — 준비 중]', colorHex:'#9B6FE0' },
+  asia:       { key:'asia',       code:'ASIA',       name:'동북·동남아시아', cities:'일본, 중국, 베트남, 싱가포르 등', colorHex:'#E3A83D' },
+  middleeast: { key:'middleeast', code:'MIDEAST',    name:'중동',           cities:'두바이, 카타르, 사우디아라비아, 오만 등', colorHex:'#E2604A' },
+  europe:     { key:'europe',     code:'EUROPE',     name:'유럽',           cities:'영국, 프랑스, 이탈리아, 스페인 등', colorHex:'#3FA6C4' },
+  namerica:   { key:'namerica',   code:'N.AMERICA',  name:'북아메리카',     cities:'뉴욕, LA, 라스베가스, 워싱턴 D.C. 등', colorHex:'#4CBE84' },
+  samerica:   { key:'samerica',   code:'S.AMERICA',  name:'남아메리카',     cities:'콜롬비아, 칠레, 브라질 등', colorHex:'#9B6FE0' },
 };
 
 // 멘토 4명 확정. 담당 지역은 두지 않음(전 지역 wildcard) — 필드(B2B/B2G/B2C)로 1차 매칭하고,
@@ -878,6 +883,19 @@ function selectRegion(key){
   render();
 }
 
+// 대륙별 실제 지도를 트레이싱한 건 아니고, 지역마다 다른 실루엣을 주기 위한 스타일라이즈드 블롭입니다.
+const REGION_MAP_PATHS = {
+  asia:       'M8,20 C10,10 25,6 38,10 C50,13 58,18 56,28 C54,38 48,45 38,48 C28,52 14,50 8,40 C4,32 6,26 8,20 Z',
+  middleeast: 'M20,10 C32,8 44,12 46,20 C48,28 42,36 34,44 C30,48 26,46 24,40 C18,36 14,28 16,20 C17,15 18,12 20,10 Z',
+  europe:     'M18,14 C26,8 40,10 46,18 C50,24 48,32 42,36 C44,42 38,48 30,46 C22,44 20,38 16,34 C10,30 12,20 18,14 Z',
+  namerica:   'M14,8 C26,4 42,6 48,16 C52,24 50,32 44,38 C40,44 34,50 26,52 C18,54 12,48 10,40 C8,30 8,18 14,8 Z',
+  samerica:   'M24,6 C34,6 42,12 42,22 C42,30 38,36 36,44 C34,50 30,56 24,56 C18,56 16,48 16,40 C16,30 14,20 18,12 C20,8 22,6 24,6 Z',
+};
+function regionMapSVG(key, colorHex){
+  const d = REGION_MAP_PATHS[key];
+  return `<svg class="region-map-svg" width="40" height="40" viewBox="0 0 64 64"><path d="${d}" fill="${colorHex}"/><ellipse cx="24" cy="18" rx="9" ry="5" fill="#fff" opacity="0.22"/></svg>`;
+}
+
 function matchOptionCardHTML(badge, colorHex, name, desc, onclickFn, tags){
   return `
     <div class="match-option-card" onclick="${onclickFn}">
@@ -929,7 +947,7 @@ function renderMatchRegion(){
         <div class="match-option-list">
           ${REGION_ORDER.map(k=>{
             const r = REGIONS[k];
-            return matchOptionCardHTML(r.code, r.colorHex, r.name, r.cities, `selectRegion('${r.key}')`);
+            return matchOptionCardHTML(regionMapSVG(r.key, r.colorHex), r.colorHex, r.name, r.cities, `selectRegion('${r.key}')`);
           }).join('')}
         </div>
       </div>
