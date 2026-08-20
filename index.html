@@ -94,10 +94,9 @@
   .lede{ font-size:14.5px; color:var(--ink-soft); line-height:1.7; margin:12px 0 22px; word-break:keep-all; }
   h1.title{ font-size:28px; line-height:1.35; margin:10px 0 0; word-break:keep-all; }
   .type-preview{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin:22px 0 6px; }
-  .type-chip{ border:1.5px solid var(--line); border-radius:10px; padding:10px 3px 8px; text-align:center; background:#1D1911; }
-  .chip-avatar{ width:36px; height:36px; border-radius:50%; overflow:hidden; margin:0 auto 6px; }
+  .type-chip{ border:1.5px solid var(--line); border-radius:10px; padding:10px; text-align:center; background:#1D1911; }
+  .chip-avatar{ width:100%; aspect-ratio:1; border-radius:50%; overflow:hidden; }
   .chip-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .type-chip .code{ font-family:'Pretendard',sans-serif; font-size:9px; color:var(--ink-soft); }
 
   .stub{ padding:16px 24px 24px; }
   button.primary{
@@ -195,7 +194,7 @@
     font-family:'Pretendard',sans-serif; font-weight:800; font-size:11.5px; letter-spacing:0.02em; text-align:center;
     transition:transform 0.2s ease;
   }
-  .region-map-svg{ animation:regionFloat 3.2s ease-in-out infinite; }
+  .region-map-svg{ width:46px; height:46px; object-fit:contain; animation:regionFloat 3.2s ease-in-out infinite; }
   .match-option-card:hover .match-photo{ transform:scale(1.08); }
   @keyframes regionFloat{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-2px) rotate(-3deg); } }
   @media (prefers-reduced-motion: reduce){ .region-map-svg{ animation:none; } }
@@ -536,7 +535,7 @@ function guestPanelHTML(){
     <div class="type-preview">
       ${AXIS_ORDER.map(k=>{
         const p = PERSONAS[k];
-        return `<div class="type-chip"><div class="chip-avatar" style="box-shadow:0 0 0 2px ${p.colorHex};"><img src="assets/personas/${p.key}_face.jpg" alt="" /></div><span class="code">${p.code}</span></div>`;
+        return `<div class="type-chip"><div class="chip-avatar" style="box-shadow:0 0 0 2px ${p.colorHex};"><img src="assets/personas/${p.key}_face.jpg" alt="" /></div></div>`;
       }).join('')}
     </div>
     <div class="field-label mono" style="margin-top:22px;">이름</div>
@@ -883,17 +882,8 @@ function selectRegion(key){
   render();
 }
 
-// 대륙별 실제 지도를 트레이싱한 건 아니고, 지역마다 다른 실루엣을 주기 위한 스타일라이즈드 블롭입니다.
-const REGION_MAP_PATHS = {
-  asia:       'M8,20 C10,10 25,6 38,10 C50,13 58,18 56,28 C54,38 48,45 38,48 C28,52 14,50 8,40 C4,32 6,26 8,20 Z',
-  middleeast: 'M20,10 C32,8 44,12 46,20 C48,28 42,36 34,44 C30,48 26,46 24,40 C18,36 14,28 16,20 C17,15 18,12 20,10 Z',
-  europe:     'M18,14 C26,8 40,10 46,18 C50,24 48,32 42,36 C44,42 38,48 30,46 C22,44 20,38 16,34 C10,30 12,20 18,14 Z',
-  namerica:   'M14,8 C26,4 42,6 48,16 C52,24 50,32 44,38 C40,44 34,50 26,52 C18,54 12,48 10,40 C8,30 8,18 14,8 Z',
-  samerica:   'M24,6 C34,6 42,12 42,22 C42,30 38,36 36,44 C34,50 30,56 24,56 C18,56 16,48 16,40 C16,30 14,20 18,12 C20,8 22,6 24,6 Z',
-};
-function regionMapSVG(key, colorHex){
-  const d = REGION_MAP_PATHS[key];
-  return `<svg class="region-map-svg" width="40" height="40" viewBox="0 0 64 64"><path d="${d}" fill="${colorHex}"/><ellipse cx="24" cy="18" rx="9" ry="5" fill="#fff" opacity="0.22"/></svg>`;
+function regionMapIcon(key){
+  return `<img class="region-map-svg" src="assets/regions/${key}.png" alt="" />`;
 }
 
 function matchOptionCardHTML(badge, colorHex, name, desc, onclickFn, tags){
@@ -947,7 +937,7 @@ function renderMatchRegion(){
         <div class="match-option-list">
           ${REGION_ORDER.map(k=>{
             const r = REGIONS[k];
-            return matchOptionCardHTML(regionMapSVG(r.key, r.colorHex), r.colorHex, r.name, r.cities, `selectRegion('${r.key}')`);
+            return matchOptionCardHTML(regionMapIcon(r.key), r.colorHex, r.name, r.cities, `selectRegion('${r.key}')`);
           }).join('')}
         </div>
       </div>
