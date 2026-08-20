@@ -775,7 +775,7 @@ function renderEntry(){
       <div class="divider"></div>
       <div class="stub">
         ${entryTab==='guest' ? `
-          <button class="primary match-cta" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '검사 시작하기 →'}</button>
+          <button class="primary match-cta" onclick="handleGuestStart()" ${entryLoading?'disabled':''}>${entryLoading ? '확인 중...' : '1단계 : 페르소나 유형검사 하러가기 →'}</button>
           <div class="meta-line">약 2분 소요 · 16문항 · 결과 즉시 확인</div>
         ` : `
           <button class="primary" onclick="handleAdminLogin()" ${adminLoading?'disabled':''}>${adminLoading?'확인 중...':'로그인'}</button>
@@ -1092,7 +1092,7 @@ function resultCardHTML(name, pct, primary, includeCta){
 
         ${includeCta ? `
         <div style="padding:6px 0 0;">
-          <button class="primary match-cta" onclick="startMatchFlow()">내가 Plug‑in할 프로젝트 발견하기 →</button>
+          <button class="primary match-cta" onclick="startMatchFlow()">2단계 : 나에게 어울리는 행사 및 멘토 매칭하기 →</button>
         </div>
         ` : ''}
       </div>
@@ -1266,7 +1266,7 @@ function renderMatchResult(){
         <p class="decision-q">당신의 다음 프로젝트에<br>Plug‑in 하시겠습니까?</p>
       </div>
       <div class="cta-row">
-        <button class="share full" onclick="handleMatchDecision(true)" ${matchDecisionLoading?'disabled':''}>${matchDecisionLoading?'처리 중...':'예, Plug‑in 할게요'}</button>
+        <button class="share full match-cta" onclick="handleMatchDecision(true)" ${matchDecisionLoading?'disabled':''}>${matchDecisionLoading?'처리 중...':'3단계 : THE FARM에 PLUG-IN 하기 →'}</button>
         <button class="restart full" onclick="handleMatchDecision(false)" ${matchDecisionLoading?'disabled':''}>아니요, 결과로 돌아갈게요</button>
       </div>
     </div>
