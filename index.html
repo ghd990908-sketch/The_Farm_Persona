@@ -219,7 +219,7 @@
   .pair-avatar.mentor-avatar{ border-style:dashed; }
   .pair-name{ font-size:13.5px; font-weight:800; margin-top:10px; word-break:keep-all; line-height:1.3; }
   .pair-sub{ font-size:10.5px; color:var(--ink-soft); margin-top:3px; word-break:keep-all; line-height:1.4; }
-  .pair-link{ position:relative; flex-shrink:0; width:40px; display:flex; align-items:center; justify-content:center; align-self:center; margin-top:33px; }
+  .pair-link{ position:relative; flex-shrink:0; width:40px; height:78px; display:flex; align-items:center; justify-content:center; align-self:flex-start; }
   .pair-link-beam{ position:absolute; width:100%; height:5px; border-radius:4px; animation:beamPulse 1.6s ease-in-out infinite; }
   .pair-link-badge{
     position:relative; z-index:1; width:34px; height:34px; border-radius:50%;
@@ -398,7 +398,7 @@ const MENTORS = [
   { id:'mentor_connector', nickname:'비즈니스 연결자', intro:'업계 경력 15년 / 기업 커뮤니케이션 전문가', photo:'assets/mentors/mentor_connector.jpg', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['explorer','thinker'] },
   { id:'mentor_director',  nickname:'수주·전략 디렉터', intro:'업계 경력 26년 / 프로젝트 PT 전문가', photo:'assets/mentors/mentor_director.jpg', eventTypes:['b2b'], regions:REGION_ORDER.slice(), personas:['builder','operator'] },
   { id:'mentor_public',    nickname:'공공프로젝트 설계자', intro:'업계 경력 10년 / 공공사업 담당 PMO', photo:'assets/mentors/mentor_public.jpg', eventTypes:['b2g'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
-  { id:'mentor_festival',  nickname:'글로벌 페스티벌 운영자', intro:'업계 경력 22년 / 해외사업 담당 PMO', photo:'assets/mentors/mentor_festival.jpg', eventTypes:['b2c'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
+  { id:'mentor_festival',  nickname:'글로벌 페스티벌 운영자', intro:'업계 경력 22년 / 해외사업 운영 전문가', photo:'assets/mentors/mentor_festival.jpg', eventTypes:['b2c'], regions:REGION_ORDER.slice(), personas:AXIS_ORDER.slice() },
 ];
 function mkProject(id, eventType, region, name, country){
   return { id, eventTypes:[eventType], regions:[region], personas: AXIS_ORDER.slice(), name, country: country || '' };
@@ -1007,7 +1007,7 @@ function renderMatchResult(){
               <div class="pair-col">
                 <div class="pair-avatar${mentor.photo ? '' : ' mentor-avatar'}" style="border-color:${P.colorHex}; box-shadow:0 0 0 5px ${P.colorHex}22, 0 0 26px 6px ${P.colorHex}55;">${mentor.photo ? `<img src="${mentor.photo}" alt="" />` : ''}</div>
                 <div class="pair-name">${escapeHtml(mentor.nickname)}</div>
-                <div class="pair-sub">${mentor.intro ? escapeHtml(mentor.intro) : '한줄 소개 준비 중'}</div>
+                <div class="pair-sub">${mentor.intro ? mentor.intro.split(' / ').map(escapeHtml).join('<br>') : '한줄 소개 준비 중'}</div>
               </div>
             </div>
             <div class="pair-matched-pill" style="background:${P.colorHex}; color:var(--on-accent); box-shadow:0 0 24px 3px ${P.colorHex}88;">MATCHED</div>
