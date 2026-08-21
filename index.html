@@ -107,6 +107,11 @@
     font-size:14px; cursor:pointer; border:1.5px solid var(--line);
   }
   .modal-actions button:disabled{ opacity:0.55; cursor:default; }
+  .consent-row{
+    display:flex; align-items:flex-start; gap:8px; margin-top:14px; cursor:pointer;
+    font-family:'Pretendard',sans-serif; font-size:12px; color:var(--ink-soft); line-height:1.5;
+  }
+  .consent-check{ flex:none; width:16px; height:16px; margin-top:1px; accent-color:var(--accent); cursor:pointer; }
   .modal-btn-cancel{ background:var(--card); color:var(--ink); }
   .modal-btn-confirm{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
 
@@ -609,6 +614,7 @@ let attendanceGender = '';
 let attendanceLoading = false;
 let attendanceError = '';
 let attendanceConfirmed = false;
+let attendanceConsent = false;
 
 const stage = document.getElementById('stage');
 
@@ -1170,7 +1176,7 @@ function restart(){
   answers = new Array(QUESTIONS.length).fill(null);
   matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
   matchRecordId=null; attendanceModalOpen=false; attendanceName=''; attendancePhone=''; attendanceGender='';
-  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false;
+  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false; attendanceConsent=false;
   render();
 }
 
@@ -1180,7 +1186,7 @@ function endSession(){
   render_result_data = null;
   matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
   matchRecordId=null; attendanceModalOpen=false; attendanceName=''; attendancePhone=''; attendanceGender='';
-  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false;
+  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false; attendanceConsent=false;
   render();
 }
 
@@ -1422,6 +1428,10 @@ function attendanceModalHTML(){
           <option value="male" ${attendanceGender==='male'?'selected':''}>남성</option>
           <option value="female" ${attendanceGender==='female'?'selected':''}>여성</option>
         </select>
+        <label class="consent-row">
+          <input type="checkbox" class="consent-check" ${attendanceConsent?'checked':''} onchange="attendanceConsent=this.checked" />
+          <span>참석자 연락을 위한 개인정보수집에 동의합니다.</span>
+        </label>
         ${attendanceError ? `<div class="field-error">${escapeHtml(attendanceError)}</div>` : ''}
         <div class="modal-actions">
           <button class="modal-btn-cancel" onclick="closeAttendanceModal()" ${attendanceLoading?'disabled':''}>취소</button>
@@ -1452,6 +1462,7 @@ async function submitAttendance(){
   if(!name){ attendanceError = '이름을 입력해주세요.'; render(); return; }
   if(phoneDigits.length < 9 || phoneDigits.length > 11){ attendanceError = '전화번호를 정확히 입력해주세요.'; render(); return; }
   if(!attendanceGender){ attendanceError = '성별을 선택해주세요.'; render(); return; }
+  if(!attendanceConsent){ attendanceError = '개인정보수집 동의가 필요해요.'; render(); return; }
 
   attendanceLoading = true;
   attendanceError = '';
