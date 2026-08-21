@@ -164,8 +164,6 @@
   h2.type-name{ font-size:33px; line-height:1.25; margin:2px 0 4px; text-wrap:balance; word-break:keep-all; }
   .type-nickname{ font-size:19px; font-weight:800; line-height:1.35; margin:0 0 6px; text-wrap:balance; word-break:keep-all; }
   .type-tagline{ font-size:13.5px; font-weight:500; color:var(--ink-soft); line-height:1.6; text-align:center; margin:10px 0 0; text-wrap:balance; word-break:keep-all; }
-  .result-detail{ padding:16px 22px 0; }
-  .result-detail-text{ font-size:13px; color:var(--ink-soft); line-height:1.7; text-align:center; margin:0; word-break:keep-all; }
   .tag-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin:12px 0 0; }
   .persona-tag{ font-family:'Pretendard',sans-serif; font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:100px; }
   .radar-title{ text-align:center; font-size:10.5px; letter-spacing:0.14em; color:var(--ink-soft); margin:16px 0 0; }
@@ -627,14 +625,10 @@ function renderLanding(){
         <span class="tag">THE FARM : Plug-IN</span>
       </div>
       <div class="card-inner landing-inner">
-        <h1 class="landing-title display">
+        <h1 class="landing-title display" style="margin-bottom:26px;">
           (주)마이스리치와 함께하는<br>
           <span class="accent-text">'MICE 산업 속에서 나를 발견하기'</span>
         </h1>
-        <p class="landing-lede">
-          (주)마이스리치가 운영하는 MICE 인재 커뮤니티 THE FARM.<br>
-          유형검사로 나의 페르소나를 찾고 전문 멘토와 매칭돼요!
-        </p>
 
         <div class="landing-steps">
           <div class="step-item">
@@ -1128,7 +1122,6 @@ function renderResult(){
 
   stage.innerHTML = `
     ${resultCardHTML(guestName, pct, primary, true)}
-    <div class="result-detail"><p class="result-detail-text">${P.summary}</p></div>
     ${cta}
   `;
 
@@ -1138,6 +1131,14 @@ function renderResult(){
 function restart(){
   screen='entry'; entryTab='guest'; qIndex=0; guestName=''; guestPhone=''; entryError='';
   answers = new Array(QUESTIONS.length).fill(null);
+  matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
+  render();
+}
+
+function endSession(){
+  screen='landing'; entryTab='guest'; qIndex=0; guestName=''; guestPhone=''; entryError='';
+  answers = new Array(QUESTIONS.length).fill(null);
+  render_result_data = null;
   matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
   render();
 }
@@ -1352,6 +1353,7 @@ function renderMatchInvite(){
       <div class="cta-row">
         <button class="share full" id="saveInviteBtn" onclick="saveInviteImage()">내 Invitation 저장하기</button>
         <button class="restart full" onclick="shareInvite()">친구에게 Persona Test 보내기</button>
+        <button class="restart full" onclick="endSession()">종료</button>
       </div>
     </div>
   `;
