@@ -582,6 +582,14 @@ let adminDeleteMode = false;
 let adminSelectedIds = new Set();
 let adminMatches = null;
 let adminMatchesError = '';
+let adminSearchQuery = '';
+
+let adminEditAttendeeId = null;
+let adminEditName = '';
+let adminEditPhone = '';
+let adminEditGender = '';
+let adminEditLoading = false;
+let adminEditError = '';
 
 let qIndex = 0;
 let answers = new Array(QUESTIONS.length).fill(null);
@@ -1541,8 +1549,8 @@ async function saveAsPDF(){
   }
 }
 
-async function downloadRowImage(i, btn){
-  const r = adminResults && adminResults[i];
+async function downloadRowImage(id, btn){
+  const r = adminResults && adminResults.find(x=>x.id===id);
   if(!r || !window.html2canvas) return;
 
   const prevText = btn ? btn.textContent : '';
@@ -1590,7 +1598,7 @@ function toggleSelectRow(id, checked){
 }
 
 function toggleSelectAll(checked){
-  const list = activeAdminList();
+  const list = filteredActiveList();
   adminSelectedIds = checked ? new Set((list||[]).map(x=>x.id)) : new Set();
   refreshAdminBody();
 }
@@ -1631,6 +1639,18 @@ function activeAdminList(){
   return adminTab==='results' ? adminResults : adminMatches;
 }
 
+function activeAdminNameGetter(){
+  if(adminTab==='results') return r => r.name;
+  if(adminTab==='attendance') return m => m.attendee_name || m.guest_name;
+  return m => m.guest_name;
+}
+
+function filteredActiveList(){
+  const list = activeAdminList();
+  if(!list) return list;
+  return filterByName(list, activeAdminNameGetter());
+}
+
 function adminTabBodyHTML(){
   if(adminTab==='results') return adminResultsBodyHTML();
   if(adminTab==='attendance') return adminAttendanceBodyHTML();
@@ -1640,7 +1660,7 @@ function adminTabBodyHTML(){
 const ADMIN_TAB_SUBTITLE = { results:'전체 응시자 결과', matches:'멘토 매칭 응답', attendance:'참석 확정 · 참가자 정보' };
 
 function renderAdminDashboard(){
-  const activeList = activeAdminList();
+  const activeList = filteredActiveList();
   stage.innerHTML = `
     <div class="admin-shell">
       <div class="admin-header">
@@ -1649,7 +1669,7 @@ function renderAdminDashboard(){
           <div class="admin-sub mono">${ADMIN_TAB_SUBTITLE[adminTab]}</div>
         </div>
         <div class="admin-actions">
-          <button id="exportCsvBtn" class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
+          <button id="exportCsvBtn" class="admin-btn ghost" onclick="exportCSV()" ${(!activeList || !activeList.length)?'disabled':''}>CSV 내보내기</button>
           <button id="deleteToggleBtn" class="admin-btn ghost" onclick="toggleDeleteMode()" ${(!activeList || !activeList.length)?'disabled':''}>${adminDeleteMode ? '선택 취소' : '삭제'}</button>
           <button class="admin-btn" onclick="handleAdminLogout()">로그아웃</button>
         </div>
@@ -1659,8 +1679,11 @@ function renderAdminDashboard(){
         <button class="entry-tab ${adminTab==='matches'?'active':''}" onclick="switchAdminTab('matches')">매칭 응답</button>
         <button class="entry-tab ${adminTab==='attendance'?'active':''}" onclick="switchAdminTab('attendance')">참가자 관리</button>
       </div>
+      <input id="adminSearchInput" class="field-input admin-search" type="text" placeholder="이름으로 검색"
+        value="${escapeAttr(adminSearchQuery)}" oninput="updateAdminSearch(this.value)" style="margin-bottom:14px;" />
       <div id="adminBody">${adminTabBodyHTML()}</div>
     </div>
+    ${adminEditAttendeeId ? adminEditAttendeeModalHTML() : ''}
   `;
 }
 
@@ -1668,9 +1691,21 @@ function switchAdminTab(tab){
   adminTab = tab;
   adminDeleteMode = false;
   adminSelectedIds = new Set();
+  adminSearchQuery = '';
   render();
   if((tab==='matches' || tab==='attendance') && adminMatches===null) loadAdminMatches();
   if(tab==='results' && adminResults===null) loadAdminResults();
+}
+
+function updateAdminSearch(value){
+  adminSearchQuery = value;
+  refreshAdminBody();
+}
+
+function filterByName(list, getName){
+  const q = adminSearchQuery.trim().toLowerCase();
+  if(!q) return list;
+  return list.filter(item => (getName(item) || '').toLowerCase().includes(q));
 }
 
 function adminMatchesBodyHTML(){
@@ -1683,7 +1718,11 @@ function adminMatchesBodyHTML(){
   if(adminMatches.length===0){
     return `<div class="admin-empty">아직 매칭 응답이 없습니다.</div>`;
   }
-  const allSelected = adminMatches.length>0 && adminMatches.every(m=>adminSelectedIds.has(m.id));
+  const filtered = filterByName(adminMatches, m=>m.guest_name);
+  if(filtered.length===0){
+    return `<div class="admin-empty">검색 결과가 없습니다.</div>`;
+  }
+  const allSelected = filtered.length>0 && filtered.every(m=>adminSelectedIds.has(m.id));
   const bulkBar = adminDeleteMode ? `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <span class="mono" style="font-size:12px;color:var(--ink-soft);">${adminSelectedIds.size}개 선택됨</span>
@@ -1699,7 +1738,7 @@ function adminMatchesBodyHTML(){
           <th>이름</th><th>페르소나</th><th>행사유형</th><th>지역</th><th>멘토</th><th>프로젝트</th><th>응답시각</th>
         </tr></thead>
         <tbody>
-          ${adminMatches.map(m=>{
+          ${filtered.map(m=>{
             const p = PERSONAS[m.persona_type];
             const e = EVENT_TYPES[m.event_type];
             const r = REGIONS[m.region];
@@ -1732,7 +1771,11 @@ function adminAttendanceBodyHTML(){
   if(adminMatches.length===0){
     return `<div class="admin-empty">아직 매칭 응답이 없습니다.</div>`;
   }
-  const allSelected = adminMatches.length>0 && adminMatches.every(m=>adminSelectedIds.has(m.id));
+  const filtered = filterByName(adminMatches, m=>m.attendee_name || m.guest_name);
+  if(filtered.length===0){
+    return `<div class="admin-empty">검색 결과가 없습니다.</div>`;
+  }
+  const allSelected = filtered.length>0 && filtered.every(m=>adminSelectedIds.has(m.id));
   const confirmedCount = adminMatches.filter(m=>m.attendance_confirmed).length;
   const bulkBar = adminDeleteMode ? `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -1750,10 +1793,10 @@ function adminAttendanceBodyHTML(){
       <table class="admin-table">
         <thead><tr>
           ${adminDeleteMode ? `<th><input type="checkbox" class="row-check" onchange="toggleSelectAll(this.checked)" ${allSelected?'checked':''}></th>` : ''}
-          <th>참석확정</th><th>이름</th><th>전화번호</th><th>성별</th><th>페르소나</th><th>멘토</th><th>확정시각</th>
+          <th>참석확정</th><th>이름</th><th>전화번호</th><th>성별</th><th>페르소나</th><th>멘토</th><th>확정시각</th>${adminDeleteMode ? '' : '<th>관리</th>'}
         </tr></thead>
         <tbody>
-          ${adminMatches.map(m=>{
+          ${filtered.map(m=>{
             const p = PERSONAS[m.persona_type];
             const confirmed = !!m.attendance_confirmed;
             return `<tr>
@@ -1767,6 +1810,7 @@ function adminAttendanceBodyHTML(){
               <td>${escapeHtml(p ? p.name : m.persona_type)}</td>
               <td>${escapeHtml(m.mentor_name)}</td>
               <td class="mono">${m.attendance_confirmed_at ? formatDate(m.attendance_confirmed_at) : '-'}</td>
+              ${adminDeleteMode ? '' : `<td><button class="admin-row-btn" onclick="openAdminEditAttendee('${m.id}')">정보 입력/수정</button></td>`}
             </tr>`;
           }).join('')}
         </tbody>
@@ -1800,6 +1844,90 @@ async function adminToggleAttendance(id, confirmed){
   }
 }
 
+function openAdminEditAttendee(id){
+  const row = adminMatches && adminMatches.find(m=>m.id===id);
+  if(!row) return;
+  adminEditAttendeeId = id;
+  adminEditName = row.attendee_name || row.guest_name || '';
+  adminEditPhone = row.attendee_phone || '';
+  adminEditGender = row.attendee_gender || '';
+  adminEditError = '';
+  render();
+}
+
+function closeAdminEditAttendee(){
+  if(adminEditLoading) return;
+  adminEditAttendeeId = null;
+  render();
+}
+
+function adminEditAttendeeModalHTML(){
+  return `
+    <div class="modal-overlay" onclick="if(event.target===this) closeAdminEditAttendee()">
+      <div class="modal-card">
+        <div class="modal-title display">참가자 정보 입력</div>
+        <p class="modal-sub">현장에서 직접 등록하는 참가자의 정보를 입력하면 참석이 확정 처리됩니다.</p>
+        <div class="field-label mono">이름</div>
+        <input class="field-input" type="text" value="${escapeAttr(adminEditName)}" maxlength="30"
+          oninput="adminEditName=this.value" placeholder="이름을 입력해주세요" />
+        <div class="field-label mono" style="margin-top:10px;">전화번호</div>
+        <input class="field-input mono" type="tel" inputmode="numeric" value="${escapeAttr(adminEditPhone)}" maxlength="13"
+          oninput="adminEditPhone=this.value" placeholder="010-1234-5678" />
+        <div class="field-label mono" style="margin-top:10px;">성별</div>
+        <select class="field-input" onchange="adminEditGender=this.value">
+          <option value="" ${adminEditGender===''?'selected':''}>선택해주세요</option>
+          <option value="male" ${adminEditGender==='male'?'selected':''}>남성</option>
+          <option value="female" ${adminEditGender==='female'?'selected':''}>여성</option>
+        </select>
+        ${adminEditError ? `<div class="field-error">${escapeHtml(adminEditError)}</div>` : ''}
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" onclick="closeAdminEditAttendee()" ${adminEditLoading?'disabled':''}>취소</button>
+          <button class="modal-btn-confirm" onclick="saveAdminEditAttendee()" ${adminEditLoading?'disabled':''}>${adminEditLoading ? '저장 중...' : '저장'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function saveAdminEditAttendee(){
+  const name = adminEditName.trim();
+  const phoneDigits = adminEditPhone.replace(/[^0-9]/g, '');
+  if(!name){ adminEditError = '이름을 입력해주세요.'; render(); return; }
+  if(phoneDigits.length < 9 || phoneDigits.length > 11){ adminEditError = '전화번호를 정확히 입력해주세요.'; render(); return; }
+  if(!adminEditGender){ adminEditError = '성별을 선택해주세요.'; render(); return; }
+
+  adminEditLoading = true;
+  adminEditError = '';
+  render();
+  try{
+    const res = await fetch('/api/admin-update-attendee', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: adminEditAttendeeId, name, phone: adminEditPhone.trim(), gender: adminEditGender })
+    });
+    if(res.status===401){
+      screen='entry'; entryTab='admin'; adminError='세션이 만료되었습니다. 다시 로그인해주세요.';
+      render();
+      return;
+    }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || '저장 실패');
+    const row = adminMatches.find(m=>m.id===adminEditAttendeeId);
+    if(row){
+      row.attendee_name = name;
+      row.attendee_phone = adminEditPhone.trim();
+      row.attendee_gender = adminEditGender;
+      row.attendance_confirmed = true;
+      row.attendance_confirmed_at = new Date().toISOString();
+    }
+    adminEditAttendeeId = null;
+  }catch(e){
+    adminEditError = '저장에 실패했어요. 다시 시도해주세요.';
+  }
+  adminEditLoading = false;
+  render();
+}
+
 async function loadAdminMatches(){
   adminMatches = null;
   adminMatchesError = '';
@@ -1830,7 +1958,11 @@ function adminResultsBodyHTML(){
   if(adminResults.length===0){
     return `<div class="admin-empty">아직 제출된 응답이 없습니다.</div>`;
   }
-  const allSelected = adminResults.length>0 && adminResults.every(r=>adminSelectedIds.has(r.id));
+  const filtered = filterByName(adminResults, r=>r.name);
+  if(filtered.length===0){
+    return `<div class="admin-empty">검색 결과가 없습니다.</div>`;
+  }
+  const allSelected = filtered.length>0 && filtered.every(r=>adminSelectedIds.has(r.id));
   const bulkBar = adminDeleteMode ? `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
       <span class="mono" style="font-size:12px;color:var(--ink-soft);">${adminSelectedIds.size}개 선택됨</span>
@@ -1847,7 +1979,7 @@ function adminResultsBodyHTML(){
           <th>완료시각</th>${adminDeleteMode ? '' : '<th>관리</th>'}
         </tr></thead>
         <tbody>
-          ${adminResults.map((r,i)=>{
+          ${filtered.map(r=>{
             const primaryP = PERSONAS[r.primary_type];
             const secondaryP = PERSONAS[r.secondary_type];
             return `<tr>
@@ -1856,7 +1988,7 @@ function adminResultsBodyHTML(){
               <td>${escapeHtml(primaryP ? primaryP.name : r.primary_type)}</td>
               <td>${escapeHtml(secondaryP ? secondaryP.name : r.secondary_type)}</td>
               <td class="mono">${formatDate(r.submitted_at)}</td>
-              ${adminDeleteMode ? '' : `<td><button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button></td>`}
+              ${adminDeleteMode ? '' : `<td><button class="admin-row-btn" onclick="downloadRowImage('${r.id}', this)">이미지 저장</button></td>`}
             </tr>`;
           }).join('')}
         </tbody>
@@ -1888,9 +2020,9 @@ async function loadAdminResults(){
 function refreshAdminBody(){
   const body = document.getElementById('adminBody');
   if(body) body.innerHTML = adminTabBodyHTML();
-  const activeList = activeAdminList();
+  const activeList = filteredActiveList();
   const exportBtn = document.getElementById('exportCsvBtn');
-  if(exportBtn) exportBtn.disabled = !(adminTab==='results' && adminResults && adminResults.length);
+  if(exportBtn) exportBtn.disabled = !(activeList && activeList.length);
   const deleteToggleBtn = document.getElementById('deleteToggleBtn');
   if(deleteToggleBtn) deleteToggleBtn.disabled = !(activeList && activeList.length);
 }
@@ -1904,6 +2036,8 @@ function handleAdminLogout(){
     adminMatches = null;
     adminMatchesError = '';
     adminTab = 'results';
+    adminSearchQuery = '';
+    adminEditAttendeeId = null;
     adminCode = '';
     entryTab = 'guest';
     screen = 'entry';
@@ -1919,18 +2053,57 @@ function formatDate(iso){
 }
 
 function exportCSV(){
-  if(!adminResults || !adminResults.length) return;
-  const headers = ['이름','주유형','부유형','완료시각'];
-  const rows = adminResults.map(r=>{
-    const primaryP = PERSONAS[r.primary_type];
-    const secondaryP = PERSONAS[r.secondary_type];
-    return [
-      r.name,
-      primaryP ? primaryP.name : r.primary_type,
-      secondaryP ? secondaryP.name : r.secondary_type,
-      formatDate(r.submitted_at)
-    ];
-  });
+  const list = filteredActiveList();
+  if(!list || !list.length) return;
+
+  let headers, rows, fileTag;
+  if(adminTab==='results'){
+    headers = ['이름','주유형','부유형','완료시각'];
+    rows = list.map(r=>{
+      const primaryP = PERSONAS[r.primary_type];
+      const secondaryP = PERSONAS[r.secondary_type];
+      return [
+        r.name,
+        primaryP ? primaryP.name : r.primary_type,
+        secondaryP ? secondaryP.name : r.secondary_type,
+        formatDate(r.submitted_at)
+      ];
+    });
+    fileTag = 'results';
+  }else if(adminTab==='attendance'){
+    headers = ['참석확정','이름','전화번호','성별','페르소나','멘토','확정시각'];
+    rows = list.map(m=>{
+      const p = PERSONAS[m.persona_type];
+      return [
+        m.attendance_confirmed ? '확정' : '미확정',
+        m.attendee_name || m.guest_name,
+        m.attendee_phone || '',
+        GENDER_LABEL[m.attendee_gender] || '',
+        p ? p.name : m.persona_type,
+        m.mentor_name,
+        m.attendance_confirmed_at ? formatDate(m.attendance_confirmed_at) : ''
+      ];
+    });
+    fileTag = 'attendance';
+  }else{
+    headers = ['이름','페르소나','행사유형','지역','멘토','프로젝트','응답시각'];
+    rows = list.map(m=>{
+      const p = PERSONAS[m.persona_type];
+      const e = EVENT_TYPES[m.event_type];
+      const r = REGIONS[m.region];
+      return [
+        m.guest_name,
+        p ? p.name : m.persona_type,
+        e ? e.code : m.event_type,
+        r ? r.name : m.region,
+        m.mentor_name,
+        m.project_name,
+        formatDate(m.created_at)
+      ];
+    });
+    fileTag = 'matches';
+  }
+
   const csvLines = [headers, ...rows].map(row =>
     row.map(cell => {
       const str = String(cell ?? '');
@@ -1942,7 +2115,7 @@ function exportCSV(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `the_farm_results_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `the_farm_${fileTag}_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
