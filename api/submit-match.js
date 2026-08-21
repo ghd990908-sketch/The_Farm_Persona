@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
   }
 
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { error } = await supabase.from('plugin_matches').insert({
+  const { data, error } = await supabase.from('plugin_matches').insert({
     guest_name: name.trim().slice(0, 60),
     phone_last4: (phoneLast4 && /^\d{4}$/.test(phoneLast4)) ? phoneLast4 : null,
     persona_type: personaType,
@@ -37,12 +37,12 @@ module.exports = async function handler(req, res) {
     project_id: projectId,
     project_name: projectName || '',
     decision: 'yes',
-  });
+  }).select('id').single();
 
   if (error) {
     res.status(500).json({ ok: false, error: error.message });
     return;
   }
 
-  res.status(200).json({ ok: true });
+  res.status(200).json({ ok: true, id: data.id });
 };

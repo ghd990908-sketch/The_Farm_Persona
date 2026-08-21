@@ -90,6 +90,26 @@
   .field-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
   .field-error{ font-family:'Pretendard',sans-serif; font-size:11.5px; color:var(--operator); margin:6px 0 0; }
 
+  /* ---------- attendance modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+  }
+  .modal-card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px; padding:24px;
+    width:100%; max-width:380px; box-shadow:0 24px 60px rgba(0,0,0,0.55);
+  }
+  .modal-title{ font-size:19px; font-weight:800; margin-bottom:6px; }
+  .modal-sub{ font-size:12.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 18px; word-break:keep-all; }
+  .modal-actions{ display:flex; gap:9px; margin-top:18px; }
+  .modal-actions button{
+    flex:1; border-radius:12px; padding:13px; font-family:'Pretendard',sans-serif; font-weight:700;
+    font-size:14px; cursor:pointer; border:1.5px solid var(--line);
+  }
+  .modal-actions button:disabled{ opacity:0.55; cursor:default; }
+  .modal-btn-cancel{ background:var(--card); color:var(--ink); }
+  .modal-btn-confirm{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+
   /* ---------- intro ---------- */
   .lede{ font-size:14.5px; color:var(--ink-soft); line-height:1.7; margin:12px 0 22px; word-break:keep-all; }
   h1.title{ font-size:28px; line-height:1.35; margin:10px 0 0; word-break:keep-all; }
@@ -555,7 +575,7 @@ let entryLoading = false;
 let adminCode = '';
 let adminError = '';
 let adminLoading = false;
-let adminTab = 'results';    // 'results' | 'matches'
+let adminTab = 'results';    // 'results' | 'matches' | 'attendance'
 let adminResults = null;
 let adminResultsError = '';
 let adminDeleteMode = false;
@@ -572,6 +592,15 @@ let matchRegion = null;
 let matchMentor = null;
 let matchProject = null;
 let matchDecisionLoading = false;
+let matchRecordId = null;
+
+let attendanceModalOpen = false;
+let attendanceName = '';
+let attendancePhone = '';
+let attendanceGender = '';
+let attendanceLoading = false;
+let attendanceError = '';
+let attendanceConfirmed = false;
 
 const stage = document.getElementById('stage');
 
@@ -1132,6 +1161,8 @@ function restart(){
   screen='entry'; entryTab='guest'; qIndex=0; guestName=''; guestPhone=''; entryError='';
   answers = new Array(QUESTIONS.length).fill(null);
   matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
+  matchRecordId=null; attendanceModalOpen=false; attendanceName=''; attendancePhone=''; attendanceGender='';
+  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false;
   render();
 }
 
@@ -1140,6 +1171,8 @@ function endSession(){
   answers = new Array(QUESTIONS.length).fill(null);
   render_result_data = null;
   matchEventType=null; matchRegion=null; matchMentor=null; matchProject=null; matchDecisionLoading=false;
+  matchRecordId=null; attendanceModalOpen=false; attendanceName=''; attendancePhone=''; attendanceGender='';
+  attendanceLoading=false; attendanceError=''; attendanceConfirmed=false;
   render();
 }
 
@@ -1301,8 +1334,9 @@ async function handleMatchDecision(isYes){
   }
   matchDecisionLoading = true;
   render();
+  matchRecordId = null;
   try{
-    await fetch('/api/submit-match', {
+    const res = await fetch('/api/submit-match', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -1317,6 +1351,8 @@ async function handleMatchDecision(isYes){
         projectName: matchProject.name
       })
     });
+    const data = await res.json().catch(()=>({}));
+    if(data && data.id) matchRecordId = data.id;
   }catch(e){ /* 화면 전환은 계속 진행, 전송 실패는 조용히 무시 */ }
   matchDecisionLoading = false;
   screen = 'matchInvite';
@@ -1351,29 +1387,82 @@ function renderMatchInvite(){
         <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">현장에서 당신에게 추천된 프로젝트와 멘토를 직접 만나게 됩니다.</p>
       </div>
       <div class="cta-row">
-        <button class="share full" id="saveInviteBtn" onclick="saveInviteImage()">내 Invitation 저장하기</button>
+        <button class="share full" onclick="openAttendanceModal()" ${attendanceConfirmed?'disabled':''}>${attendanceConfirmed ? '참석 확정 완료 ✓' : '참석 확정하기'}</button>
         <button class="restart full" onclick="shareInvite()">친구에게 Persona Test 보내기</button>
         <button class="restart full" onclick="endSession()">종료</button>
+      </div>
+    </div>
+    ${attendanceModalOpen ? attendanceModalHTML() : ''}
+  `;
+}
+
+function attendanceModalHTML(){
+  return `
+    <div class="modal-overlay" onclick="if(event.target===this) closeAttendanceModal()">
+      <div class="modal-card">
+        <div class="modal-title display">참석 확정하기</div>
+        <p class="modal-sub">행사 당일 참석 확인을 위해 정보를 입력해주세요.</p>
+        <div class="field-label mono">이름</div>
+        <input class="field-input" type="text" value="${escapeAttr(attendanceName)}" maxlength="30"
+          oninput="attendanceName=this.value" placeholder="이름을 입력해주세요" />
+        <div class="field-label mono" style="margin-top:10px;">전화번호</div>
+        <input class="field-input mono" type="tel" inputmode="numeric" value="${escapeAttr(attendancePhone)}" maxlength="13"
+          oninput="attendancePhone=this.value" placeholder="010-1234-5678" />
+        <div class="field-label mono" style="margin-top:10px;">성별</div>
+        <select class="field-input" onchange="attendanceGender=this.value">
+          <option value="" ${attendanceGender===''?'selected':''}>선택해주세요</option>
+          <option value="male" ${attendanceGender==='male'?'selected':''}>남성</option>
+          <option value="female" ${attendanceGender==='female'?'selected':''}>여성</option>
+        </select>
+        ${attendanceError ? `<div class="field-error">${escapeHtml(attendanceError)}</div>` : ''}
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" onclick="closeAttendanceModal()" ${attendanceLoading?'disabled':''}>취소</button>
+          <button class="modal-btn-confirm" onclick="submitAttendance()" ${attendanceLoading?'disabled':''}>${attendanceLoading ? '확인 중...' : '확정하기'}</button>
+        </div>
       </div>
     </div>
   `;
 }
 
-async function saveInviteImage(){
-  const btn = document.getElementById('saveInviteBtn');
-  if(btn) btn.disabled = true;
+function openAttendanceModal(){
+  if(attendanceConfirmed) return;
+  attendanceModalOpen = true;
+  if(!attendanceName) attendanceName = guestName || '';
+  attendanceError = '';
+  render();
+}
+
+function closeAttendanceModal(){
+  if(attendanceLoading) return;
+  attendanceModalOpen = false;
+  render();
+}
+
+async function submitAttendance(){
+  const name = attendanceName.trim();
+  const phoneDigits = attendancePhone.replace(/[^0-9]/g, '');
+  if(!name){ attendanceError = '이름을 입력해주세요.'; render(); return; }
+  if(phoneDigits.length < 9 || phoneDigits.length > 11){ attendanceError = '전화번호를 정확히 입력해주세요.'; render(); return; }
+  if(!attendanceGender){ attendanceError = '성별을 선택해주세요.'; render(); return; }
+
+  attendanceLoading = true;
+  attendanceError = '';
+  render();
   try{
-    const canvas = await captureResultCanvas();
-    if(!canvas){ alert('이미지 저장 기능을 불러오지 못했어요. 새로고침 후 다시 시도해주세요.'); return; }
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `THE_FARM_Invitation_${(guestName || 'guest').replace(/[^\w가-힣]/g, '')}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } finally {
-    if(btn) btn.disabled = false;
+    const res = await fetch('/api/confirm-attendance', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ matchId: matchRecordId, name, phone: attendancePhone.trim(), gender: attendanceGender })
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || '실패');
+    attendanceConfirmed = true;
+    attendanceModalOpen = false;
+  }catch(e){
+    attendanceError = '저장에 실패했어요. 다시 시도해주세요.';
   }
+  attendanceLoading = false;
+  render();
 }
 
 async function shareInvite(){
@@ -1501,7 +1590,7 @@ function toggleSelectRow(id, checked){
 }
 
 function toggleSelectAll(checked){
-  const list = adminTab==='results' ? adminResults : adminMatches;
+  const list = activeAdminList();
   adminSelectedIds = checked ? new Set((list||[]).map(x=>x.id)) : new Set();
   refreshAdminBody();
 }
@@ -1538,14 +1627,26 @@ async function deleteSelectedRows(){
 /* ---------------------------------------------------------
    9. ADMIN DASHBOARD
 --------------------------------------------------------- */
+function activeAdminList(){
+  return adminTab==='results' ? adminResults : adminMatches;
+}
+
+function adminTabBodyHTML(){
+  if(adminTab==='results') return adminResultsBodyHTML();
+  if(adminTab==='attendance') return adminAttendanceBodyHTML();
+  return adminMatchesBodyHTML();
+}
+
+const ADMIN_TAB_SUBTITLE = { results:'전체 응시자 결과', matches:'멘토 매칭 응답', attendance:'참석 확정 · 참가자 정보' };
+
 function renderAdminDashboard(){
-  const activeList = adminTab==='results' ? adminResults : adminMatches;
+  const activeList = activeAdminList();
   stage.innerHTML = `
     <div class="admin-shell">
       <div class="admin-header">
         <div>
           <div class="admin-title display">THE FARM 관리자 대시보드</div>
-          <div class="admin-sub mono">${adminTab==='results' ? '전체 응시자 결과' : '멘토 매칭 응답'}</div>
+          <div class="admin-sub mono">${ADMIN_TAB_SUBTITLE[adminTab]}</div>
         </div>
         <div class="admin-actions">
           <button id="exportCsvBtn" class="admin-btn ghost" onclick="exportCSV()" ${(adminTab!=='results' || !adminResults || !adminResults.length)?'disabled':''}>CSV 내보내기</button>
@@ -1556,8 +1657,9 @@ function renderAdminDashboard(){
       <div class="entry-tabs" style="margin-bottom:16px;">
         <button class="entry-tab ${adminTab==='results'?'active':''}" onclick="switchAdminTab('results')">응시 결과</button>
         <button class="entry-tab ${adminTab==='matches'?'active':''}" onclick="switchAdminTab('matches')">매칭 응답</button>
+        <button class="entry-tab ${adminTab==='attendance'?'active':''}" onclick="switchAdminTab('attendance')">참가자 관리</button>
       </div>
-      <div id="adminBody">${adminTab==='results' ? adminResultsBodyHTML() : adminMatchesBodyHTML()}</div>
+      <div id="adminBody">${adminTabBodyHTML()}</div>
     </div>
   `;
 }
@@ -1567,7 +1669,7 @@ function switchAdminTab(tab){
   adminDeleteMode = false;
   adminSelectedIds = new Set();
   render();
-  if(tab==='matches' && adminMatches===null) loadAdminMatches();
+  if((tab==='matches' || tab==='attendance') && adminMatches===null) loadAdminMatches();
   if(tab==='results' && adminResults===null) loadAdminResults();
 }
 
@@ -1618,6 +1720,86 @@ function adminMatchesBodyHTML(){
   `;
 }
 
+const GENDER_LABEL = { male:'남성', female:'여성' };
+
+function adminAttendanceBodyHTML(){
+  if(adminMatchesError){
+    return `<div class="admin-empty">${escapeHtml(adminMatchesError)}</div>`;
+  }
+  if(!adminMatches){
+    return `<div class="admin-empty">불러오는 중...</div>`;
+  }
+  if(adminMatches.length===0){
+    return `<div class="admin-empty">아직 매칭 응답이 없습니다.</div>`;
+  }
+  const allSelected = adminMatches.length>0 && adminMatches.every(m=>adminSelectedIds.has(m.id));
+  const confirmedCount = adminMatches.filter(m=>m.attendance_confirmed).length;
+  const bulkBar = adminDeleteMode ? `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span class="mono" style="font-size:12px;color:var(--ink-soft);">${adminSelectedIds.size}개 선택됨</span>
+      <button id="bulkDeleteBtn" class="admin-btn danger" onclick="deleteSelectedRows()" ${adminSelectedIds.size===0?'disabled':''}>선택 삭제 (${adminSelectedIds.size})</button>
+    </div>
+  ` : `
+    <div style="margin-bottom:12px;">
+      <span class="mono" style="font-size:12px;color:var(--ink-soft);">참석 확정 ${confirmedCount} / ${adminMatches.length}명</span>
+    </div>
+  `;
+  return `
+    ${bulkBar}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          ${adminDeleteMode ? `<th><input type="checkbox" class="row-check" onchange="toggleSelectAll(this.checked)" ${allSelected?'checked':''}></th>` : ''}
+          <th>참석확정</th><th>이름</th><th>전화번호</th><th>성별</th><th>페르소나</th><th>멘토</th><th>확정시각</th>
+        </tr></thead>
+        <tbody>
+          ${adminMatches.map(m=>{
+            const p = PERSONAS[m.persona_type];
+            const confirmed = !!m.attendance_confirmed;
+            return `<tr>
+              ${adminDeleteMode ? `<td><input type="checkbox" class="row-check" onchange="toggleSelectRow('${m.id}', this.checked)" ${adminSelectedIds.has(m.id)?'checked':''}></td>` : ''}
+              <td>${adminDeleteMode
+                ? (confirmed ? '✓ 확정' : '미확정')
+                : `<button class="admin-row-btn" onclick="adminToggleAttendance('${m.id}', ${!confirmed})">${confirmed ? '✓ 확정' : '미확정'}</button>`}</td>
+              <td>${escapeHtml(m.attendee_name || m.guest_name)}</td>
+              <td class="mono">${escapeHtml(m.attendee_phone || '-')}</td>
+              <td>${escapeHtml(GENDER_LABEL[m.attendee_gender] || '-')}</td>
+              <td>${escapeHtml(p ? p.name : m.persona_type)}</td>
+              <td>${escapeHtml(m.mentor_name)}</td>
+              <td class="mono">${m.attendance_confirmed_at ? formatDate(m.attendance_confirmed_at) : '-'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function adminToggleAttendance(id, confirmed){
+  try{
+    const res = await fetch('/api/admin-set-attendance', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id, confirmed })
+    });
+    if(res.status===401){
+      screen='entry'; entryTab='admin'; adminError='세션이 만료되었습니다. 다시 로그인해주세요.';
+      render();
+      return;
+    }
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || '변경 실패');
+    const row = adminMatches.find(m=>m.id===id);
+    if(row){
+      row.attendance_confirmed = confirmed;
+      row.attendance_confirmed_at = confirmed ? new Date().toISOString() : null;
+    }
+    refreshAdminBody();
+  }catch(e){
+    alert('참석 상태 변경에 실패했어요. 다시 시도해주세요.');
+  }
+}
+
 async function loadAdminMatches(){
   adminMatches = null;
   adminMatchesError = '';
@@ -1662,12 +1844,10 @@ function adminResultsBodyHTML(){
         <thead><tr>
           ${adminDeleteMode ? `<th><input type="checkbox" class="row-check" onchange="toggleSelectAll(this.checked)" ${allSelected?'checked':''}></th>` : ''}
           <th>이름</th><th>주유형</th><th>부유형</th>
-          ${AXIS_ORDER.map(k=>`<th>${AXIS_LABEL[k]}</th>`).join('')}
           <th>완료시각</th>${adminDeleteMode ? '' : '<th>관리</th>'}
         </tr></thead>
         <tbody>
           ${adminResults.map((r,i)=>{
-            const s = (r.scores && r.scores.pct) ? r.scores.pct : {};
             const primaryP = PERSONAS[r.primary_type];
             const secondaryP = PERSONAS[r.secondary_type];
             return `<tr>
@@ -1675,7 +1855,6 @@ function adminResultsBodyHTML(){
               <td>${escapeHtml(r.name)}</td>
               <td>${escapeHtml(primaryP ? primaryP.name : r.primary_type)}</td>
               <td>${escapeHtml(secondaryP ? secondaryP.name : r.secondary_type)}</td>
-              ${AXIS_ORDER.map(k=>`<td>${s[k] ?? '-'}</td>`).join('')}
               <td class="mono">${formatDate(r.submitted_at)}</td>
               ${adminDeleteMode ? '' : `<td><button class="admin-row-btn" onclick="downloadRowImage(${i}, this)">이미지 저장</button></td>`}
             </tr>`;
@@ -1708,8 +1887,8 @@ async function loadAdminResults(){
 
 function refreshAdminBody(){
   const body = document.getElementById('adminBody');
-  if(body) body.innerHTML = adminTab==='results' ? adminResultsBodyHTML() : adminMatchesBodyHTML();
-  const activeList = adminTab==='results' ? adminResults : adminMatches;
+  if(body) body.innerHTML = adminTabBodyHTML();
+  const activeList = activeAdminList();
   const exportBtn = document.getElementById('exportCsvBtn');
   if(exportBtn) exportBtn.disabled = !(adminTab==='results' && adminResults && adminResults.length);
   const deleteToggleBtn = document.getElementById('deleteToggleBtn');
@@ -1741,16 +1920,14 @@ function formatDate(iso){
 
 function exportCSV(){
   if(!adminResults || !adminResults.length) return;
-  const headers = ['이름','주유형','부유형', ...AXIS_ORDER.map(k=>AXIS_LABEL[k]), '완료시각'];
+  const headers = ['이름','주유형','부유형','완료시각'];
   const rows = adminResults.map(r=>{
-    const s = (r.scores && r.scores.pct) ? r.scores.pct : {};
     const primaryP = PERSONAS[r.primary_type];
     const secondaryP = PERSONAS[r.secondary_type];
     return [
       r.name,
       primaryP ? primaryP.name : r.primary_type,
       secondaryP ? secondaryP.name : r.secondary_type,
-      ...AXIS_ORDER.map(k => s[k] ?? ''),
       formatDate(r.submitted_at)
     ];
   });
